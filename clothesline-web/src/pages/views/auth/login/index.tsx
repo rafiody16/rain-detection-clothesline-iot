@@ -51,11 +51,11 @@ const ViewLogin = () => {
                 <form className={styles.form} onSubmit={handleSubmit}>
                     <div className={styles.inputGroup}>
                         <label>Email</label>
-                        <input type="email" placeholder="Enter your email" required />
+                        <input type="email" name="email" placeholder="Enter your email" required />
                     </div>
                     <div className={styles.inputGroup}>
                         <label>Password</label>
-                        <input type="password" placeholder="Enter your password" required />
+                        <input type="password" name="password" placeholder="Enter your password" required />
                     </div>
                     <button type="submit" className={styles.signInBtn}>
                         Sign In

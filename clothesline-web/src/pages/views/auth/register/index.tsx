@@ -66,19 +66,19 @@ const ViewRegister = () => {
                 <form className={styles.form} onSubmit={handleSubmit}>
                     <div className={styles.inputGroup}>
                         <label>Full Name</label>
-                        <input type="text" placeholder="Jamaludin" required />
+                        <input type="text" name="fullname" placeholder="Jamaludin" required />
                     </div>
                     <div className={styles.inputGroup}>
                         <label>Email Address</label>
-                        <input type="email" placeholder="name@example.com" required />
+                        <input type="email" name="email" placeholder="name@example.com" required />
                     </div>
                     <div className={styles.inputGroup}>
                         <label>Password</label>
-                        <input type="password" placeholder="Type your password" required />
+                        <input type="password" name="password" placeholder="Type your password" required />
                     </div>
                     <div className={styles.inputGroup}>
                         <label>Confirm Password</label>
-                        <input type="password" placeholder="Confirm your password" required />
+                        <input type="password" name="confirmPassword" placeholder="Confirm your password" required />
                     </div>
 
                     <button type="submit" className={styles.signInBtn}>
