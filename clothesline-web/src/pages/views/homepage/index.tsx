@@ -84,7 +84,7 @@ const TampilanHomepage = ({ weathers }: { weathers: WeatherData[] }) => {
                   </button> */}
           {data ? (
             <>
-              <span className={styles.userName}>{data.user?.fullname}</span>
+              <span className={styles.userName}>{data.user?.name}</span>
               {/* <div className={styles.navbar__user}>
                         Welcome, {data.user?.fullname}
                         {data.user.image && (
