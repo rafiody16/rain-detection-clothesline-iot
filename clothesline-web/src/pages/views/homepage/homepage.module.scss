@@ -38,11 +38,22 @@ $text-muted: #64748b;
     color: $text-muted;
     margin-top: 8px;
     align-items: center;
+
+    span {
+      display: flex;
+      align-items: center;
+      gap: 6px; 
+      white-space: nowrap; 
+    }
+
     svg {
       color: $purple;
+      font-size: 1rem; 
     }
+
     .divider {
       color: #cbd5e1;
+      display: inline; // Divider tetap inline biasa
     }
   }
 }
@@ -168,7 +179,7 @@ $text-muted: #64748b;
     font-weight: bold; }
 
 .mapArea {
-  height: 160px;
+  height: 230px;
   background: #e2e8f0;
   border-radius: 12px;
   position: relative;
