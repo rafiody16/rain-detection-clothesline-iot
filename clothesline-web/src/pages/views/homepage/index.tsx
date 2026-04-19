@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import styles from './homepage.module.scss';
+import { useSession, signIn, signOut } from "next-auth/react";
+import Image from "next/image";
 import { 
     FaMapMarkerAlt, FaThermometerHalf, FaTint, 
     FaWind, FaCloud, FaCloudSun, FaSignOutAlt, FaSun, 
@@ -28,9 +30,7 @@ const TampilanHomepage = ({ weathers }: { weathers: WeatherData[]}) => {
     const [time, setTime] = useState<Date>(new Date());
     const [hasMounted, setHasMounted] = useState(false);
 
-    const data: any = null; 
-    const signIn = () => console.log("Sign In clicked");
-    const signOut = () => console.log("Sign Out clicked");
+    const { data } = useSession();
 
     useEffect(() => {
         setHasMounted(true);
@@ -56,27 +56,47 @@ const TampilanHomepage = ({ weathers }: { weathers: WeatherData[]}) => {
             {/* HEADER */}
             <header className={styles.mainHeader}>
                 <div className={styles.headerTitleGroup}>
-                    <h1 className={styles.dashboardTitle}>Dashboard Smart Clothesline</h1>
-                    <div className={styles.dateTimeWrapper}>
-                        <span><FaCalendarAlt /> {formatDate(time)}</span>
-                        <span className={styles.divider}>|</span>
-                        <span><FaClock /> {time.toLocaleTimeString("id-ID")}</span>
-                    </div>
+                  <h1 className={styles.dashboardTitle}>Dashboard Smart Clothesline</h1>
+                  <div className={styles.dateTimeWrapper}>
+                    <span>
+                      <FaCalendarAlt /> {formatDate(time)}
+                    </span>
+                    <span className={styles.divider}>|</span>
+                    <span>
+                      <FaClock /> {time.toLocaleTimeString("id-ID")}
+                    </span>
+                  </div>
                 </div>
 
                 <div className={styles.userSection}>
-                    {data ? (
-                        <>
-                            <span className={styles.userName}>{data.user?.fullname}</span>
-                            <button className={styles.btnLogout} onClick={() => signOut()}>
-                                <FaSignOutAlt /> Sign Out
-                            </button>
-                        </>
-                    ) : (
-                        <button className={styles.btnLogout} onClick={() => signIn()}>
-                            Sign In
-                        </button>
-                    )}
+                  {/* <span className={styles.userName}>malik</span>
+                  <button className={styles.btnLogout}>
+                    <FaSignOutAlt /> Logout
+                  </button> */}
+                  {data ? (
+                    <>
+                      <span className={styles.userName}>{data.user?.fullname}</span>
+                      {/* <div className={styles.navbar__user}>
+                        Welcome, {data.user?.fullname}
+                        {data.user.image && (
+                          <Image
+                            src={data.user.image}
+                            alt={data.user.fullname}
+                            className={styles.navbar__user__image}
+                            width={50}
+                            height={50}
+                          />
+                        )}
+                      </div> */}
+                      <button className={styles.btnLogout} onClick={() => signOut()}>
+                        Sign Out
+                      </button>
+                    </>
+                  ) : (
+                    <button className={styles.btnLogout} onClick={() => signIn()}>
+                      Sign In
+                    </button>
+                  )}
                 </div>
             </header>
 
