@@ -6,167 +6,306 @@ $text-main: #1e293b;
 $text-muted: #64748b;
 
 .dashboardContainer {
-    background-color: $bg-gray;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    padding: 2.5rem;
-    font-family: Arial, Helvetica, sans-serif;
-    color: $text-main;
-    box-sizing: border-box;
-    }
+  background-color: $bg-gray;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  padding: 2.5rem;
+  font-family: Arial, Helvetica, sans-serif;
+  color: $text-main;
+  box-sizing: border-box;
+}
 
 .mainHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid $border-color;
+
+  .dashboardTitle {
+    color: $purple;
+    font-size: 1.6rem;
+    font-weight: 700;
+    margin: 0;
+  }
+
+  .dateTimeWrapper {
     display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 2rem;
-    padding-bottom: 1.5rem;
-    border-bottom: 1px solid $border-color;
-
-    .dashboardTitle { 
-        color: $purple; 
-        font-size: 1.6rem; 
-        font-weight: 700; 
-        margin: 0; 
+    gap: 12px;
+    font-size: 0.85rem;
+    color: $text-muted;
+    margin-top: 8px;
+    align-items: center;
+    svg {
+      color: $purple;
     }
-
-    .dateTimeWrapper {
-        display: flex; gap: 12px; font-size: 0.85rem; color: $text-muted; margin-top: 8px;
-        align-items: center;
-        svg { color: $purple; }
-        .divider { color: #cbd5e1; }
+    .divider {
+      color: #cbd5e1;
     }
+  }
 }
 
 .userSection {
-    display: flex; align-items: center; gap: 12px;
-    .userName { font-weight: 600; text-transform: lowercase; }
-    .btnLogout { background: none; border: none; color: $purple; cursor: pointer; font-weight: 600; }
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  .userName {
+    font-weight: 600;
+    // text-transform: lowercase;
+  }
+  .btnLogin {
+    background: $purple;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+  }
+  .btnLogout {
+    background: none;
+    border: none;
+    color: $purple;
+    cursor: pointer;
+    font-weight: 600;
+  }
 }
 
 .mainGrid {
-    flex: 1;
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 1.2rem;
-    margin-bottom: 2rem;
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.2rem;
+  margin-bottom: 2rem;
 
-    @media (max-width: 1100px) { grid-template-columns: repeat(2, 1fr); }
-    @media (max-width: 650px) { grid-template-columns: 1fr; }
+  @media (max-width: 1100px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  @media (max-width: 650px) {
+    grid-template-columns: 1fr;
+  }
 }
 
 .card {
-    background: white;
-    border-radius: 12px;
-    border: 1px solid $border-color;
+  background: white;
+  border-radius: 12px;
+  border: 1px solid $border-color;
+  display: flex;
+  flex-direction: column;
+  padding: 1.5rem;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+
+  .cardHeader {
+    height: 35px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    .cardTitle {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin: 0;
+    }
+  }
+
+  .cardBody {
+    flex: 1;
     display: flex;
     flex-direction: column;
-    padding: 1.5rem;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+  }
 
-    .cardHeader {
-        height: 35px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 1.5rem;
-        .cardTitle { font-size: 1.1rem; font-weight: 700; margin: 0; }
-    }
+  .separator {
+    height: 1px;
+    background-color: #f1f5f9;
+    margin: 1.5rem 0;
+  }
 
-    .cardBody {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-    }
-
-    .separator {
-        height: 1px;
-        background-color: #f1f5f9;
-        margin: 1.5rem 0;
-    }
-
-    .cardFooter {
-        min-height: 45px;
-        display: flex;
-        align-items: center;
-    }
+  .cardFooter {
+    min-height: 45px;
+    display: flex;
+    align-items: center;
+  }
 }
 
 // UI Elements
-.badgeLive { 
-    background: #fee2e2; 
-    color: #ef4444; 
-    padding: 4px 10px; 
-    border-radius: 20px; 
-    font-size: 0.7rem; 
-    font-weight: bold; 
+.badgeLive {
+  background: #fee2e2;
+  color: #ef4444;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.7rem;
+  font-weight: bold;
 }
 
-.badgeOptimal { 
-    background: #dcfce7; 
-    color: #15803d; 
-    padding: 4px 10px; 
-    border-radius: 20px; 
-    font-size: 0.7rem; 
-    font-weight: bold; }
+.badgeOptimal {
+  background: #dcfce7;
+  color: #15803d;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.7rem;
+  font-weight: bold;
+}
 
 .mapArea {
-    height: 160px; background: #e2e8f0; border-radius: 12px; position: relative;
-    .mapMarker { position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%); }
-    .mapPopup { background: white; padding: 6px 12px; border-radius: 8px; font-size: 0.75rem; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+  height: 160px;
+  background: #e2e8f0;
+  border-radius: 12px;
+  position: relative;
+  .mapMarker {
+    position: absolute;
+    top: 40%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+  }
+  .mapPopup {
+    background: white;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 0.75rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
 }
 
 .weatherMain {
-    display: flex; justify-content: space-between; align-items: center; margin: 1.5rem 0;
-    .tempDisplay { font-size: 2.8rem; font-weight: 800; display: flex; align-items: center; small { font-size: 1.2rem; } }
-    .sunIcon { font-size: 3.5rem; color: #fbbf24; }
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 1.5rem 0;
+  .tempDisplay {
+    font-size: 2.8rem;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    small {
+      font-size: 1.2rem;
+    }
+  }
+  .sunIcon {
+    font-size: 3.5rem;
+    color: #fbbf24;
+  }
 }
 
 .weatherGrid {
-    display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
-    .metric { 
-        text-align: center; background: #f8fafc; padding: 10px; border-radius: 10px;
-        span { display: block; font-size: 0.65rem; color: $text-muted; }
-        strong { font-size: 0.85rem; }
-        svg { color: $purple; margin-bottom: 4px; }
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  .metric {
+    text-align: center;
+    background: #f8fafc;
+    padding: 10px;
+    border-radius: 10px;
+    span {
+      display: block;
+      font-size: 0.65rem;
+      color: $text-muted;
     }
+    strong {
+      font-size: 0.85rem;
+    }
+    svg {
+      color: $purple;
+      margin-bottom: 4px;
+    }
+  }
 }
 
 .buttonGroup {
-    display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
-    .ctrlBtn {
-        height: 100px; border-radius: 12px; border: 1px solid $border-color;
-        background: white; cursor: pointer; font-weight: 600;
-        display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
-        &.active { background: $purple; color: white; border-color: $purple; }
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  .ctrlBtn {
+    height: 100px;
+    border-radius: 12px;
+    border: 1px solid $border-color;
+    background: white;
+    cursor: pointer;
+    font-weight: 600;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    &.active {
+      background: $purple;
+      color: white;
+      border-color: $purple;
     }
+  }
 }
 
 .weeklyStats {
-    width: 100%;
-    h3 { font-size: 0.85rem; color: $text-muted; margin-bottom: 10px; }
-    .statLine { display: flex; justify-content: space-between; font-size: 0.9rem; padding: 5px 0; }
+  width: 100%;
+  h3 {
+    font-size: 0.85rem;
+    color: $text-muted;
+    margin-bottom: 10px;
+  }
+  .statLine {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.9rem;
+    padding: 5px 0;
+  }
 }
 
 .statusTile {
-    padding: 10px; border-radius: 10px; border: 1px solid #f8fafc; margin-bottom: 8px;
-    h3 { margin: 5px 0; font-size: 1.2rem; }
-    p { font-size: 0.75rem; color: $text-muted; margin: 0; }
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px solid #f8fafc;
+  margin-bottom: 8px;
+  h3 {
+    margin: 5px 0;
+    font-size: 1.2rem;
+  }
+  p {
+    font-size: 0.75rem;
+    color: $text-muted;
+    margin: 0;
+  }
 }
 
-.progressBase { height: 6px; background: #f1f5f9; border-radius: 10px; margin-top: 8px; overflow: hidden; }
-.progressFill { height: 100%; background: $purple; transition: 0.4s ease; }
-
-.mainFooter { 
-    text-align: center; 
-    padding: 2rem 0; 
-    border-top: 1px solid $border-color; 
-    color: $text-muted; 
-    font-size: 0.8rem; 
-
+.progressBase {
+  height: 6px;
+  background: #f1f5f9;
+  border-radius: 10px;
+  margin-top: 8px;
+  overflow: hidden;
 }
-.textGreen { color: $green; }
-.iconPurple { color: $purple; margin-right: 10px; }
-.cardCaption { font-size: 0.8rem; color: $text-muted; line-height: 1.5; margin: 0; }
-.statusBanner { font-size: 0.8rem; color: #15803d; background: #dcfce7; padding: 10px; border-radius: 8px; width: 100%; text-align: center; }
+.progressFill {
+  height: 100%;
+  background: $purple;
+  transition: 0.4s ease;
+}
+
+.mainFooter {
+  text-align: center;
+  padding: 2rem 0;
+  border-top: 1px solid $border-color;
+  color: $text-muted;
+  font-size: 0.8rem;
+}
+.textGreen {
+  color: $green;
+}
+.iconPurple {
+  color: $purple;
+  margin-right: 10px;
+}
+.cardCaption {
+  font-size: 0.8rem;
+  color: $text-muted;
+  line-height: 1.5;
+  margin: 0;
+}
+.statusBanner {
+  font-size: 0.8rem;
+  color: #15803d;
+  background: #dcfce7;
+  padding: 10px;
+  border-radius: 8px;
+  width: 100%;
+  text-align: center;
+}
