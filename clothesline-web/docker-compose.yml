@@ -2,15 +2,9 @@ services:
   web:
     build:
       context: .
-      dockerfile: Dockerfile.dev
-    env_file: 
-      - .env.local
+      dockerfile: Dockerfile
+    env_file:
+      - .env.production
     ports:
       - "3000:3000"
-    volumes:
-      - .:/app
-      - /app/node_modules
-    environment:
-      - NODE_ENV=development
-      - WATCHPACK_POLLING=true
-    command: npm run dev
+    restart: unless-stopped
