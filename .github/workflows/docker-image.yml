@@ -2,7 +2,7 @@ name: Build and Push Docker Image
 
 on:
   workflow_run:
-    workflows: ["ci-clothesline-Web"]
+    workflows: ["CI - clothesline-web"]
     types:
       - completed
     branches:
