@@ -1,14 +1,10 @@
-name: CI - clothesline-web
+name: PR - clothesline-web
 
 on:
-  workflow_dispatch:
-  push:
-    branches:
-      - main
+  pull_request:
     paths:
       - 'clothesline-web/**'
-      - '.github/workflows/ci-clothesline-web.yml'
-      - '.github/workflows/cd-clothesline-web-vercel.yml'
+      - '.github/workflows/pr-clothesline-web.yml'
 
 jobs:
   lint-and-build:

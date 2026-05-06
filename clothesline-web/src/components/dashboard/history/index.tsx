@@ -1,7 +1,8 @@
-"use client"
+"use client";
 
-import { AppSidebar } from "@/components/app-sidebar"
-import { ModeToggle } from "@/components/mode-toggle"
+import { useEffect, useState } from "react";
+import { AppSidebar } from "@/components/app-sidebar";
+import { ModeToggle } from "@/components/mode-toggle";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -9,17 +10,56 @@ import {
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb"
-import { Separator } from "@/components/ui/separator"
+} from "@/components/ui/breadcrumb";
+import { Separator } from "@/components/ui/separator";
 import {
   SidebarInset,
   SidebarProvider,
   SidebarTrigger,
-} from "@/components/ui/sidebar"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { History } from "lucide-react"
+} from "@/components/ui/sidebar";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { History } from "lucide-react";
 
 export default function HistoryPage() {
+  const [logs, setLogs] = useState<any[]>([]);
+
+  useEffect(() => {
+    let mounted = true;
+    const fetchLogs = async () => {
+      try {
+        const res = await fetch("/api/iot");
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!mounted) return;
+        if (Array.isArray(data)) {
+          const sorted = [...data].sort((a: any, b: any) => {
+            const aT = a.timestamp ?? a.time ?? a.createdAt ?? a.ts ?? 0;
+            const bT = b.timestamp ?? b.time ?? b.createdAt ?? b.ts ?? 0;
+            const aDate = aT ? new Date(aT).getTime() : 0;
+            const bDate = bT ? new Date(bT).getTime() : 0;
+            return bDate - aDate;
+          });
+          setLogs(sorted);
+        }
+      } catch (err) {
+        console.error("Failed fetching /api/iot", err);
+      }
+    };
+
+    fetchLogs();
+    const id = setInterval(fetchLogs, 5000);
+    return () => {
+      mounted = false;
+      clearInterval(id);
+    };
+  }, []);
+
   return (
     <SidebarProvider>
       <AppSidebar />
@@ -28,7 +68,10 @@ export default function HistoryPage() {
           <div className="flex items-center justify-between w-full px-4">
             <div className="flex items-center gap-2">
               <SidebarTrigger className="-ml-1" />
-              <Separator orientation="vertical" className="mr-2 data-[orientation=vertical]:h-4" />
+              <Separator
+                orientation="vertical"
+                className="mr-2 data-[orientation=vertical]:h-4"
+              />
               <Breadcrumb>
                 <BreadcrumbList>
                   <BreadcrumbItem className="hidden md:block">
@@ -51,15 +94,21 @@ export default function HistoryPage() {
               <History className="w-6 h-6" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold tracking-tight">Historical Data</h1>
-              <p className="text-muted-foreground">View past records of sensor readings and servo actions.</p>
+              <h1 className="text-3xl font-bold tracking-tight">
+                Historical Data
+              </h1>
+              <p className="text-muted-foreground">
+                View past records of sensor readings and servo actions.
+              </p>
             </div>
           </div>
 
           <Card>
             <CardHeader>
               <CardTitle>Data Log (Static Preview)</CardTitle>
-              <CardDescription>A list of previous environmental readings</CardDescription>
+              <CardDescription>
+                A list of previous environmental readings
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="rounded-md border">
@@ -74,27 +123,61 @@ export default function HistoryPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    <tr className="border-b">
-                      <td className="px-6 py-4">2026-04-29 08:00:00</td>
-                      <td className="px-6 py-4">26°C</td>
-                      <td className="px-6 py-4">55%</td>
-                      <td className="px-6 py-4">40</td>
-                      <td className="px-6 py-4">Clear</td>
-                    </tr>
-                    <tr className="border-b">
-                      <td className="px-6 py-4">2026-04-29 04:00:00</td>
-                      <td className="px-6 py-4">22°C</td>
-                      <td className="px-6 py-4">70%</td>
-                      <td className="px-6 py-4">0</td>
-                      <td className="px-6 py-4 text-blue-500">Raining</td>
-                    </tr>
-                    <tr>
-                      <td className="px-6 py-4">2026-04-29 00:00:00</td>
-                      <td className="px-6 py-4">24°C</td>
-                      <td className="px-6 py-4">65%</td>
-                      <td className="px-6 py-4">0</td>
-                      <td className="px-6 py-4">Clear</td>
-                    </tr>
+                    {logs.length === 0 ? (
+                      <tr>
+                        <td
+                          colSpan={5}
+                          className="px-6 py-4 text-center text-muted-foreground"
+                        >
+                          No data available
+                        </td>
+                      </tr>
+                    ) : (
+                      logs.map((item: any) => {
+                        const ts =
+                          item.timestamp ??
+                          item.time ??
+                          item.createdAt ??
+                          item.ts ??
+                          item.id ??
+                          "";
+                        const timeStr =
+                          ts && !Number.isNaN(Date.parse(String(ts)))
+                            ? new Date(ts).toLocaleString("id-ID")
+                            : String(ts);
+                        const temp = item.suhu ?? "-";
+                        const humidity = item.lembab ?? "-";
+                        const light = item.ldr ?? "-";
+                        const rainVal = item.hujan ?? null;
+                        const rainDisplay =
+                          typeof rainVal === "number"
+                            ? rainVal > 0
+                              ? "Raining"
+                              : "Clear"
+                            : rainVal
+                              ? String(rainVal)
+                              : "Clear";
+                        return (
+                          <tr key={item.id ?? timeStr} className="border-b">
+                            <td className="px-6 py-4">{timeStr}</td>
+                            <td className="px-6 py-4">
+                              {typeof temp === "number" ? `${temp}°C` : temp}
+                            </td>
+                            <td className="px-6 py-4">
+                              {typeof humidity === "number"
+                                ? `${humidity}%`
+                                : humidity}
+                            </td>
+                            <td className="px-6 py-4">{light}</td>
+                            <td
+                              className={`px-6 py-4 ${rainDisplay === "Raining" ? "text-blue-500" : ""}`}
+                            >
+                              {rainDisplay}
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -103,5 +186,5 @@ export default function HistoryPage() {
         </div>
       </SidebarInset>
     </SidebarProvider>
-  )
+  );
 }
