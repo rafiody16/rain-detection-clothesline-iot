@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { AppSidebar } from "@/components/app-sidebar";
 import { ModeToggle } from "@/components/mode-toggle";
 import {
@@ -26,40 +26,12 @@ import {
 } from "@/components/ui/card";
 import { History } from "lucide-react";
 
-export default function HistoryPage() {
-  const [logs, setLogs] = useState<any[]>([]);
+type HistoryPageProps = {
+  logs: any[];
+  isLoading?: boolean;
+};
 
-  useEffect(() => {
-    let mounted = true;
-    const fetchLogs = async () => {
-      try {
-        const res = await fetch("/api/iot");
-        if (!res.ok) return;
-        const data = await res.json();
-        if (!mounted) return;
-        if (Array.isArray(data)) {
-          const sorted = [...data].sort((a: any, b: any) => {
-            const aT = a.timestamp ?? a.time ?? a.createdAt ?? a.ts ?? 0;
-            const bT = b.timestamp ?? b.time ?? b.createdAt ?? b.ts ?? 0;
-            const aDate = aT ? new Date(aT).getTime() : 0;
-            const bDate = bT ? new Date(bT).getTime() : 0;
-            return bDate - aDate;
-          });
-          setLogs(sorted);
-        }
-      } catch (err) {
-        console.error("Failed fetching /api/iot", err);
-      }
-    };
-
-    fetchLogs();
-    const id = setInterval(fetchLogs, 5000);
-    return () => {
-      mounted = false;
-      clearInterval(id);
-    };
-  }, []);
-
+export default function HistoryPage({ logs, isLoading }: HistoryPageProps) {
   return (
     <SidebarProvider>
       <AppSidebar />
@@ -123,60 +95,35 @@ export default function HistoryPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {logs.length === 0 ? (
+                    {isLoading ? (
                       <tr>
-                        <td
-                          colSpan={5}
-                          className="px-6 py-4 text-center text-muted-foreground"
-                        >
-                          No data available
+                        <td colSpan={5} className="px-6 py-4 text-center text-muted-foreground">
+                          Loading historical data...
+                        </td>
+                      </tr>
+                    ) : 
+                    logs.length === 0 ? (
+                      <tr>
+                        <td colSpan={5} className="px-6 py-4 text-center text-muted-foreground">
+                          No historical data available.
                         </td>
                       </tr>
                     ) : (
-                      logs.map((item: any) => {
-                        const ts =
-                          item.timestamp ??
-                          item.time ??
-                          item.createdAt ??
-                          item.ts ??
-                          item.id ??
-                          "";
-                        const timeStr =
-                          ts && !Number.isNaN(Date.parse(String(ts)))
-                            ? new Date(ts).toLocaleString("id-ID")
-                            : String(ts);
-                        const temp = item.suhu ?? "-";
-                        const humidity = item.lembab ?? "-";
-                        const light = item.ldr ?? "-";
-                        const rainVal = item.hujan ?? null;
-                        const rainDisplay =
-                          typeof rainVal === "number"
-                            ? rainVal > 0
-                              ? "Raining"
-                              : "Clear"
-                            : rainVal
-                              ? String(rainVal)
-                              : "Clear";
-                        return (
-                          <tr key={item.id ?? timeStr} className="border-b">
-                            <td className="px-6 py-4">{timeStr}</td>
-                            <td className="px-6 py-4">
-                              {typeof temp === "number" ? `${temp}°C` : temp}
-                            </td>
-                            <td className="px-6 py-4">
-                              {typeof humidity === "number"
-                                ? `${humidity}%`
-                                : humidity}
-                            </td>
-                            <td className="px-6 py-4">{light}</td>
-                            <td
-                              className={`px-6 py-4 ${rainDisplay === "Raining" ? "text-blue-500" : ""}`}
-                            >
-                              {rainDisplay}
-                            </td>
-                          </tr>
-                        );
-                      })
+                      logs.map((log, index) => (
+                        <tr key={index} className="border-b hover:bg-muted/50">
+                          <td className="px-6 py-4">{log.timestamp}</td>
+                          <td className="px-6 py-4">{log.temperature} °C</td>
+                          <td className="px-6 py-4">{log.humidity} %</td>
+                          <td className="px-6 py-4">{log.light} lux</td>
+                          <td className="px-6 py-4">
+                            {log.rain ? (
+                              <span className="text-red-500 font-medium">Rain Detected</span>
+                            ) : (
+                              <span className="text-green-500 font-medium">No Rain</span>
+                            )}
+                          </td>
+                        </tr>
+                      ))
                     )}
                   </tbody>
                 </table>
