@@ -19,7 +19,22 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Settings } from "lucide-react"
 
-export default function SystemLogsPage() {
+interface SystemLog {
+  id: string;
+  timestamp: string;
+  level: "INFO" | "DEBUG" | "EVENT" | "ERROR";
+  message: string;
+}
+
+export default function SystemLogsPage({logs = []}: {logs?: SystemLog[]}) {
+  const getLogColor = (level: string) => {
+    switch (level) {
+      case "ERROR": return "text-red-400";
+      case "EVENT": return "text-blue-400";
+      case "DEBUG": return "text-zinc-400";
+      default: return "text-green-400";
+    }
+  }
   return (
     <SidebarProvider>
       <AppSidebar />
@@ -63,13 +78,19 @@ export default function SystemLogsPage() {
             </CardHeader>
             <CardContent>
               <div className="bg-black/90 text-green-400 p-4 rounded-lg font-mono text-sm overflow-x-auto">
-                <div>[2026-04-29 08:12:33] INFO: MQTT Connected to Broker</div>
-                <div>[2026-04-29 08:12:35] INFO: Sensor DHT22 Initialized</div>
-                <div>[2026-04-29 08:12:35] INFO: Sensor LDR Initialized</div>
-                <div>[2026-04-29 08:12:35] INFO: Rain Sensor Initialized</div>
-                <div className="text-zinc-400">[2026-04-29 09:00:00] DEBUG: Mode set to AUTO</div>
-                <div className="text-blue-400">[2026-04-29 10:15:22] EVENT: Rain detected. Retracting Servo.</div>
-                <div className="text-zinc-400">[2026-04-29 10:15:25] DEBUG: Servo position: 0 (Retracted)</div>
+                {logs.length === 0 ? (
+                  <div className="text-zinc-600 italic">Waiting for incoming logs...</div>
+                ) : (
+                  logs.map((log) => (
+                    <div key={log.id} className="mb-1 flex gap-2">
+                      <span className="text-zinc-500 shrink-0">[{log.timestamp}]</span>
+                      <span className={`font-bold shrink-0 ${getLogColor(log.level)}`}>
+                        {log.level}:
+                      </span>
+                      <span className="text-zinc-300">{log.message}</span>
+                    </div>
+                  ))
+                )}
               </div>
             </CardContent>
           </Card>
