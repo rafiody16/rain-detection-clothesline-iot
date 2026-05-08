@@ -6,9 +6,10 @@ on:
     branches:
       - main
     paths:
-      - 'clothesline-web/**'
-      - '.github/workflows/ci-clothesline-web.yml'
-      - '.github/workflows/cd-clothesline-web-vercel.yml'
+      - "clothesline-web/**"
+      - ".github/workflows/ci-clothesline-web.yml"
+      - ".github/workflows/cd-clothesline-web-vercel.yml"
+      - ".github/workflows/docker-image.yml"
 
 jobs:
   lint-and-build:

@@ -18,7 +18,6 @@ export default async function handler (
         }
 
         const data = await response.json();
-
         const sensor = Object.entries(data).map(([id, value]) => ({
             id,
             ...(value as object)

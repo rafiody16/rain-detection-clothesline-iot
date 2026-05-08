@@ -1,9 +1,10 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
   reactCompiler: true,
   reactStrictMode: true,
+  output: "standalone",
+  turbopack: {},
   images: {
     remotePatterns: [
       {
@@ -25,7 +26,7 @@ const nextConfig: NextConfig = {
         pathname: "/**",
       }
     ],
-  }
+  },
 };
 
 export default nextConfig;
