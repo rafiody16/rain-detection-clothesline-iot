@@ -35,5 +35,5 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha, mode=max
           tags: |
-            ${{ secrets.DOCKER_USERNAME }}/clothesline-web:latest
-            ${{ secrets.DOCKER_USERNAME }}/clothesline-web:${{ github.sha }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/clothesline-web:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/clothesline-web:${{ github.sha }}
