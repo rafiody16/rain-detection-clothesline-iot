@@ -1,6 +1,6 @@
 "use client";
 import AnalyticsPage from "@/components/dashboard/analytics";
-import { BarChart3, Clock, Droplets, RotateCcw } from "lucide-react";
+import { BarChart3, Droplets, RotateCcw } from "lucide-react";
 
 
 const Analytics = () => {
@@ -31,7 +31,16 @@ const Analytics = () => {
       footer: "Sistem bekerja 12 kali hari ini.",
       icon: RotateCcw,
       colorClass: "bg-purple-100 text-purple-600 dark:bg-purple-900/30",
-    }
+    },
+    {
+      title: "Total Aktivitas Servo",
+      description: "Penyiraman Otomatis",
+      value: "12",
+      unit: "kali",
+      footer: "Sistem bekerja 12 kali hari ini.",
+      icon: RotateCcw,
+      colorClass: "bg-purple-100 text-purple-600 dark:bg-purple-900/30",
+    },
   ];
     return (
         <AnalyticsPage stats={dataStats} />
