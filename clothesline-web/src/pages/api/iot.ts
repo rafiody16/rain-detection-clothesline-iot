@@ -18,7 +18,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             url += `?orderBy="timestamp"&startAt="${start}"&endAt="${end}"`;
         } else {
             // Jika tidak ada tanggal, batasi ambil 50 data terbaru saja agar tidak berat
-            url += `?orderBy="timestamp"&limitToLast=50`;
+            url += `?orderBy="timestamp"`;
         }
 
         const response = await fetch(url);
