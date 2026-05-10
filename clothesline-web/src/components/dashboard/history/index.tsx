@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AppSidebar } from "@/components/app-sidebar";
 import { ModeToggle } from "@/components/mode-toggle";
 import {
@@ -24,42 +24,75 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { History } from "lucide-react";
+import { BadgeCheck, CalendarIcon, CloudRainIcon, History, Sun } from "lucide-react";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Button } from "@/components/ui/button";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
+import { Table, TableHeader, TableHead, TableRow, TableBody, TableCell } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { Field, FieldLabel } from "@/components/ui/field";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
-export default function HistoryPage() {
-  const [logs, setLogs] = useState<any[]>([]);
+type HistoryPageProps = {
+  logs: any[];
+  isLoading?: boolean;
+  date?: Date | undefined;
+  onDateChange?: (date: Date | undefined) => void;
+};
 
-  useEffect(() => {
-    let mounted = true;
-    const fetchLogs = async () => {
-      try {
-        const res = await fetch("/api/iot");
-        if (!res.ok) return;
-        const data = await res.json();
-        if (!mounted) return;
-        if (Array.isArray(data)) {
-          const sorted = [...data].sort((a: any, b: any) => {
-            const aT = a.timestamp ?? a.time ?? a.createdAt ?? a.ts ?? 0;
-            const bT = b.timestamp ?? b.time ?? b.createdAt ?? b.ts ?? 0;
-            const aDate = aT ? new Date(aT).getTime() : 0;
-            const bDate = bT ? new Date(bT).getTime() : 0;
-            return bDate - aDate;
-          });
-          setLogs(sorted);
-        }
-      } catch (err) {
-        console.error("Failed fetching /api/iot", err);
-      }
-    };
+export default function HistoryPage({ logs, isLoading, date, onDateChange }: HistoryPageProps) {
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(25);
 
-    fetchLogs();
-    const id = setInterval(fetchLogs, 5000);
-    return () => {
-      mounted = false;
-      clearInterval(id);
-    };
-  }, []);
+  // console.log("Initial logs prop:", logs);
 
+  const processedLogs = useMemo(() => {
+    let result = [...logs];
+    // console.log("Raw logs before processing:", result);
+
+    if (date) {
+      const targetDate = format(date, "yyyy-MM-dd");
+      result = result.filter(log => log.timestamp.startsWith(targetDate));
+    }
+
+    return result.sort((a, b) => {
+      if (a.timestamp === "-") return 1;
+      if (b.timestamp === "-") return -1;
+      return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
+    });
+  }, [logs, date]);
+  // console.log("Processed Logs:", processedLogs);
+
+  const totalPages = Math.ceil(processedLogs.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+
+  const currentLogs = processedLogs.slice(startIndex, startIndex + itemsPerPage);
+
+  const goToNextPage = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (currentPage < totalPages) setCurrentPage(prev => prev + 1);
+  };
+
+  const goToPrevPage = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (currentPage > 1) setCurrentPage(prev => prev - 1);
+  };
   return (
     <SidebarProvider>
       <AppSidebar />
@@ -88,98 +121,209 @@ export default function HistoryPage() {
           </div>
         </header>
 
-        <div className="flex flex-1 flex-col gap-6 p-6 pt-6">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-100 dark:bg-blue-900/30 text-blue-600 rounded-lg">
-              <History className="w-6 h-6" />
+        <div className="flex flex-1 flex-col gap-6 p-4 md:p-6">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-blue-100 dark:bg-blue-900/30 text-blue-600 rounded-lg shrink-0">
+                <History className="w-6 h-6" />
+              </div>
+              <div>
+                <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
+                  Historical Data
+                </h1>
+                <p className="text-sm text-muted-foreground">
+                  View past records of sensor readings and servo actions.
+                </p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-3xl font-bold tracking-tight">
-                Historical Data
-              </h1>
-              <p className="text-muted-foreground">
-                View past records of sensor readings and servo actions.
-              </p>
+
+            <div className="flex flex-col gap-1.5 w-full md:w-auto">
+              <span className="text-xs font-semibold uppercase text-muted-foreground ml-1">
+                Filter Tanggal
+              </span>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant={"outline"}
+                    className={cn(
+                      "w-[240px] justify-start text-left font-normal",
+                      !date && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {date ? format(date, "PPP") : <span>Pick a date</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="end">
+                  <Calendar
+                    mode="single"
+                    selected={date}
+                    onSelect={(newDate) => {
+                      onDateChange?.(newDate);
+                      setCurrentPage(1);
+                    }}
+                    disabled={(date) => date > new Date() || date < new Date("1900-01-01")}
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
           </div>
 
           <Card>
-            <CardHeader>
-              <CardTitle>Data Log (Static Preview)</CardTitle>
-              <CardDescription>
-                A list of previous environmental readings
-              </CardDescription>
-            </CardHeader>
             <CardContent>
-              <div className="rounded-md border">
-                <table className="w-full text-sm text-left">
-                  <thead className="text-xs text-muted-foreground uppercase bg-muted/50 border-b">
-                    <tr>
-                      <th className="px-6 py-3">Timestamp</th>
-                      <th className="px-6 py-3">Temperature</th>
-                      <th className="px-6 py-3">Humidity</th>
-                      <th className="px-6 py-3">Light (Lux)</th>
-                      <th className="px-6 py-3">Rain Status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {logs.length === 0 ? (
-                      <tr>
-                        <td
-                          colSpan={5}
-                          className="px-6 py-4 text-center text-muted-foreground"
-                        >
-                          No data available
-                        </td>
-                      </tr>
-                    ) : (
-                      logs.map((item: any) => {
-                        const ts =
-                          item.timestamp ??
-                          item.time ??
-                          item.createdAt ??
-                          item.ts ??
-                          item.id ??
-                          "";
-                        const timeStr =
-                          ts && !Number.isNaN(Date.parse(String(ts)))
-                            ? new Date(ts).toLocaleString("id-ID")
-                            : String(ts);
-                        const temp = item.suhu ?? "-";
-                        const humidity = item.lembab ?? "-";
-                        const light = item.ldr ?? "-";
-                        const rainVal = item.hujan ?? null;
-                        const rainDisplay =
-                          typeof rainVal === "number"
-                            ? rainVal > 0
-                              ? "Raining"
-                              : "Clear"
-                            : rainVal
-                              ? String(rainVal)
-                              : "Clear";
-                        return (
-                          <tr key={item.id ?? timeStr} className="border-b">
-                            <td className="px-6 py-4">{timeStr}</td>
-                            <td className="px-6 py-4">
-                              {typeof temp === "number" ? `${temp}°C` : temp}
-                            </td>
-                            <td className="px-6 py-4">
-                              {typeof humidity === "number"
-                                ? `${humidity}%`
-                                : humidity}
-                            </td>
-                            <td className="px-6 py-4">{light}</td>
-                            <td
-                              className={`px-6 py-4 ${rainDisplay === "Raining" ? "text-blue-500" : ""}`}
-                            >
-                              {rainDisplay}
-                            </td>
-                          </tr>
-                        );
-                      })
-                    )}
-                  </tbody>
-                </table>
+              <div className="hidden md:block rounded-md border">
+                <Table className="w-full text-sm text-left">
+                  <TableHeader className="bg-zinc-100 dark:bg-zinc-800">
+                    <TableRow>
+                      <TableHead className="font-bold text-center">Timestamp</TableHead>
+                      <TableHead className="font-bold text-center">Temperature</TableHead>
+                      <TableHead className="font-bold text-center">Humidity</TableHead>
+                      <TableHead className="font-bold text-center">Light (Lux)</TableHead>
+                      <TableHead className="font-bold text-center">Rain Status</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {isLoading ? (
+                      <TableRow>
+                        <TableCell colSpan={5} className="px-6 py-4 text-center text-muted-foreground">
+                          Loading historical data...
+                        </TableCell>
+                      </TableRow>
+                    ) :
+                      processedLogs.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={5} className="px-6 py-4 text-center text-muted-foreground">
+                            No historical data available.
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        currentLogs.map((log, index) => (
+                          <TableRow key={log.id || `${log.timestamp}-${index}`} className="border-b hover:bg-muted/50">
+                            <TableCell className="px-6 py-4 font-medium text-center">{log.timestamp.includes(' ') ? log.timestamp.split(' ')[1] : log.timestamp}</TableCell>
+                            <TableCell className="px-6 py-4 text-center">{log.temperature} °C</TableCell>
+                            <TableCell className="px-6 py-4 text-center">{log.humidity} %</TableCell>
+                            <TableCell className="px-6 py-4 text-center">{log.light} lux</TableCell>
+                            <TableCell className="px-6 py-4 text-center">
+                              {log.rain ? (
+                                <Badge variant={"outline"} className="text-blue-500 font-medium">
+                                  <CloudRainIcon data-icon="inline-start" className="w-4 h-4 mr-1" />
+                                  Rain Detected
+                                </Badge>
+                              ) : (
+                                <Badge variant={"outline"} className="text-yellow-500 font-medium">
+                                  <Sun data-icon="inline-start" className="w-4 h-4 mr-1" />
+                                  No Rain
+                                </Badge>
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                  </TableBody>
+                </Table>
+              </div>
+
+              <div className="flex flex-col md:hidden">
+                {isLoading ? (
+                  <div className="p-8 text-center text-sm text-muted-foreground animate-pulse">
+                    Loading records...
+                  </div>
+                ) : processedLogs.length === 0 ? (
+                  <div className="p-8 text-center text-sm text-muted-foreground italic">
+                    No data found for this date.
+                  </div>
+                ) : (
+                  <div className="divide-y divide-border">
+                    {currentLogs.map((log, index) => (
+                      <div
+                        key={log.id || `${log.timestamp}-${index}`}
+                        className="py-4 flex items-center justify-between group active:bg-muted/50 transition-colors"
+                      >
+                        <div className="flex flex-col gap-1">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-semibold tracking-tight">
+                              {log.timestamp.includes(' ') ? log.timestamp.split(' ')[1] : log.timestamp}
+                            </span>
+                            {log.rain ? (
+                              <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
+                            ) : (
+                              <div className="w-1.5 h-1.5 rounded-full bg-yellow-400" />
+                            )}
+                          </div>
+                          <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-medium">
+                            {log.rain ? "Rainy" : "Clear Sky"}
+                          </span>
+                        </div>
+
+                        <div className="flex items-center gap-4 text-right">
+                          <div className="flex flex-col">
+                            <span className="text-sm font-medium">{log.temperature}°C</span>
+                            <span className="text-[9px] text-muted-foreground uppercase">Temp</span>
+                          </div>
+                          <div className="flex flex-col">
+                            <span className="text-sm font-medium">{log.humidity}%</span>
+                            <span className="text-[9px] text-muted-foreground uppercase">Hum</span>
+                          </div>
+                          <div className="flex flex-col min-w-[40px]">
+                            <span className="text-sm font-medium">{log.light}</span>
+                            <span className="text-[9px] text-muted-foreground uppercase">Lux</span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <div className="mt-4 flex items-center justify-between gap-4">
+                <Field orientation="horizontal" className="w-fit">
+                  <FieldLabel htmlFor="select-rows-per-page">Rows per page</FieldLabel>
+                  <Select
+                    value={itemsPerPage.toString()}
+                    onValueChange={(v) => setItemsPerPage(Number(v))}
+                  >
+                    <SelectTrigger className="w-20" id="select-rows-per-page">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent align="start">
+                      <SelectGroup>
+                        <SelectItem value="10">10</SelectItem>
+                        <SelectItem value="25">25</SelectItem>
+                        <SelectItem value="50">50</SelectItem>
+                        <SelectItem value="100">100</SelectItem>
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                </Field>
+
+                <div className="flex items-center gap-4">
+                  <span className="text-sm text-muted-foreground">
+                    Page {currentPage} of {totalPages || 1}
+                  </span>
+                  <Pagination className="mx-0 w-auto">
+                    <PaginationContent>
+                      <PaginationItem>
+                        <PaginationPrevious
+                          href="#"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            if (currentPage > 1) setCurrentPage(currentPage - 1);
+                          }}
+                          className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                        />
+                      </PaginationItem>
+                      <PaginationItem>
+                        <PaginationNext
+                          href="#"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            if (currentPage < totalPages) setCurrentPage(currentPage + 1);
+                          }}
+                          className={currentPage >= totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                        />
+                      </PaginationItem>
+                    </PaginationContent>
+                  </Pagination>
+                </div>
               </div>
             </CardContent>
           </Card>

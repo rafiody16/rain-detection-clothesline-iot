@@ -56,71 +56,35 @@ import {
   CartesianGrid,
   Tooltip,
 } from "recharts";
+import { SensorChart } from "../charts/sensor-chart";
+import { Badge } from "../ui/badge";
+import { px } from "motion/react";
 
-const chartData = [
-  { time: "00:00", temp: 24, humidity: 65, light: 0, rain: 0 },
-  { time: "04:00", temp: 22, humidity: 70, light: 0, rain: 10 },
-  { time: "08:00", temp: 26, humidity: 55, light: 40, rain: 0 },
-  { time: "12:00", temp: 32, humidity: 40, light: 95, rain: 0 },
-  { time: "16:00", temp: 30, humidity: 45, light: 80, rain: 0 },
-  { time: "20:00", temp: 27, humidity: 50, light: 10, rain: 5 },
-  { time: "24:00", temp: 25, humidity: 60, light: 0, rain: 0 },
-];
+interface DashboardProps {
+  isOnline: boolean;
+  latestData: any;
+  chartData: any[];
+  stats?: any[];
+}
 
-export default function Dashboard() {
-  const [servoMode, setServoMode] = useState("auto");
-  const [servoState, setServoState] = useState("extended");
-  const [time, setTime] = useState<Date | null>(null);
-
-  // sensor data from /api/iot
-  const [sensorData, setSensorData] = useState<any[]>([]);
-  const [latestSensor, setLatestSensor] = useState<any | null>(null);
-
-  const formatNum = (v: any, digits = 1) => {
-    if (v === undefined || v === null || Number.isNaN(Number(v))) return null;
-    return Number(v).toFixed(digits);
-  };
+export default function Dashboard({ isOnline, latestData, chartData, stats }: DashboardProps) {
+  const [servoMode, setServoMode] = useState<"auto" | "manual" | "timer">("auto");
+  const [servoState, setServoState] = useState<"extended" | "retracted">("retracted");
+  const [time, setTime] = useState<Date>(new Date());
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
+    const raf = requestAnimationFrame(() => {
+      setIsMounted(true);
+    });
     const tick = () => setTime(new Date());
     tick();
     const timer = setInterval(tick, 1000);
-    return () => clearInterval(timer);
-  }, []);
-
-  useEffect(() => {
-    let mounted = true;
-    const fetchSensor = async () => {
-      try {
-        const res = await fetch("/api/iot");
-        if (!res.ok) return;
-        const data = await res.json();
-        if (!mounted) return;
-        if (Array.isArray(data)) {
-          setSensorData(data);
-          // try to determine latest by timestamp-like fields
-          const sorted = [...data].sort((a: any, b: any) => {
-            const aT = a.timestamp ?? a.time ?? a.createdAt ?? a.ts ?? null;
-            const bT = b.timestamp ?? b.time ?? b.createdAt ?? b.ts ?? null;
-            const aDate = aT ? new Date(aT).getTime() : 0;
-            const bDate = bT ? new Date(bT).getTime() : 0;
-            return aDate - bDate;
-          });
-          setLatestSensor(sorted[sorted.length - 1] ?? data[data.length - 1]);
-        }
-      } catch (error) {
-        console.error("Failed to fetch /api/iot", error);
-      }
-    };
-
-    fetchSensor();
-    const id = setInterval(fetchSensor, 5000);
     return () => {
-      mounted = false;
-      clearInterval(id);
+      clearInterval(timer);
+      cancelAnimationFrame(raf);
     };
   }, []);
-
   return (
     <SidebarProvider>
       <AppSidebar />
@@ -145,294 +109,154 @@ export default function Dashboard() {
                 </BreadcrumbList>
               </Breadcrumb>
             </div>
-            <div className="flex items-center gap-4">
-              {/* HANYA render seluruh blok jam jika 'time' tidak null */}
-              {time && (
-                <div className="hidden sm:flex flex-col items-end justify-center h-full">
-                  <div className="font-semibold text-sm text-foreground leading-tight">
-                    {time.toLocaleTimeString("id-ID", {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                      second: "2-digit",
-                    })}
-                  </div>
-                  <div className="text-[11px] text-muted-foreground font-medium leading-tight">
-                    {time.toLocaleDateString("id-ID", {
-                      weekday: "long",
-                      day: "numeric",
-                      month: "short",
-                      year: "numeric",
-                    })}
-                  </div>
+            <div className="flex items-center gap-6">
+              <div className="flex items-center gap-2 pr-2 border-r border-zinc-200 dark:border-zinc-800 h-8">
+                <div className="flex items-center gap-2 px-3 py-1 bg-zinc-100 dark:bg-zinc-900 rounded-full transition-colors duration-500">
+                  <span className="relative flex h-2 w-2">
+                    {isOnline && (
+                      <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${isOnline ? "bg-green-400" : "bg-zinc-400"
+                        }`}></span>
+                    )}
+                    <span className={`relative inline-flex rounded-full h-2 w-2 transition-colors duration-500 ${isOnline ? "bg-green-500" : "bg-zinc-500"
+                      }`}></span>
+                  </span>
+
+                  <span className="text-[10px] font-bold text-zinc-600 dark:text-zinc-400 uppercase tracking-wider">
+                    {isOnline ? "Online" : "Offline"}
+                  </span>
                 </div>
+              </div>
+              {isMounted && time ? (
+                <>
+                  <div className="flex flex-col items-end justify-center h-full">
+                    {/* JAM: Di mobile hanya jam:menit, di desktop tampilkan detik */}
+                    <div className="font-semibold text-sm text-zinc-900 dark:text-zinc-50 leading-tight tabular-nums">
+                      <span className="sm:hidden">
+                        {time.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}
+                      </span>
+                      <span className="hidden sm:inline">
+                        {time.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
+                      </span>
+                    </div>
+
+                    {/* TANGGAL: Di mobile format singkat (Minggu, 10 Mei), di desktop format lengkap */}
+                    <div className="text-[10px] text-zinc-900 dark:text-zinc-50 text-muted-foreground font-medium leading-tight tabular-nums">
+                      <span className="sm:hidden">
+                        {time.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" })}
+                      </span>
+                      <span className="hidden sm:inline">
+                        {time.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "short", year: "numeric" })}
+                      </span>
+                    </div>
+                  </div>
+                </>) : (
+                <div className="w-16 h-8 bg-zinc-200 dark:bg-zinc-800 rounded-md animate-pulse" />
               )}
               <ModeToggle />
             </div>
           </div>
         </header>
 
-        <div className="flex flex-1 flex-col gap-6 p-6 pt-6">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-            <div>
-              <h1 className="text-3xl font-bold tracking-tight">
-                System Dashboard
-              </h1>
-              <p className="text-muted-foreground">
-                Monitor and control your automated clothesline system.
-              </p>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-sm font-medium border border-green-200 dark:border-green-800">
-                <span className="relative flex h-2.5 w-2.5">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500"></span>
-                </span>
-                System Online
-              </div>
-            </div>
-          </div>
-
-          <Tabs defaultValue="overview" className="space-y-6">
-            <TabsList className="bg-zinc-100 dark:bg-zinc-900 p-1 rounded-xl">
-              <TabsTrigger value="overview" className="rounded-lg">
-                Overview
-              </TabsTrigger>
-              <TabsTrigger value="control" className="rounded-lg">
-                Servo Control
-              </TabsTrigger>
-              <TabsTrigger value="config" className="rounded-lg">
-                Configuration
-              </TabsTrigger>
+        <div className="flex flex-1 flex-col gap-4 p-4 md:p-8 pt-4">
+          <Tabs defaultValue="overview" className="w-full">
+            <TabsList variant="line">
+              <TabsTrigger value="overview">Overview</TabsTrigger>
+              <TabsTrigger value="control">Servo Control</TabsTrigger>
+              <TabsTrigger value="config">Configuration</TabsTrigger>
             </TabsList>
 
-            <TabsContent
-              value="overview"
-              className="space-y-6 animate-in fade-in-50"
-            >
+            <TabsContent value="overview" className="space-y-6 animate-in fade-in-50">
+              {/* 1. SENSOR STATS - Tetap 4 kolom di layar besar */}
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                <Card className="rounded-2xl border-none shadow-sm bg-white dark:bg-zinc-950 overflow-hidden relative">
-                  <div className="absolute top-0 right-0 w-24 h-24 bg-amber-500/10 rounded-bl-full z-0" />
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 z-10">
-                    <CardTitle className="text-sm font-medium text-zinc-500">
-                      Temperature
-                    </CardTitle>
-                    <ThermometerSun className="h-4 w-4 text-amber-500" />
-                  </CardHeader>
-                  <CardContent className="z-10">
-                    <div className="text-3xl font-bold">
-                      {latestSensor
-                        ? formatNum(latestSensor.suhu)
-                          ? `${formatNum(latestSensor.suhu)}°C`
-                          : "—"
-                        : "—"}
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {latestSensor ? "Live" : "No data"}
-                    </p>
-                  </CardContent>
-                </Card>
-                <Card className="rounded-2xl border-none shadow-sm bg-white dark:bg-zinc-950 overflow-hidden relative">
-                  <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/10 rounded-bl-full z-0" />
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 z-10">
-                    <CardTitle className="text-sm font-medium text-zinc-500">
-                      Humidity
-                    </CardTitle>
-                    <Wind className="h-4 w-4 text-blue-500" />
-                  </CardHeader>
-                  <CardContent className="z-10">
-                    <div className="text-3xl font-bold">
-                      {latestSensor
-                        ? formatNum(latestSensor.lembab)
-                          ? `${formatNum(latestSensor.lembab)}%`
-                          : "—"
-                        : "—"}
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {latestSensor ? "Live" : "No data"}
-                    </p>
-                  </CardContent>
-                </Card>
-                <Card className="rounded-2xl border-none shadow-sm bg-white dark:bg-zinc-950 overflow-hidden relative">
-                  <div className="absolute top-0 right-0 w-24 h-24 bg-yellow-500/10 rounded-bl-full z-0" />
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 z-10">
-                    <CardTitle className="text-sm font-medium text-zinc-500">
-                      Light Level (LDR)
-                    </CardTitle>
-                    <Sun className="h-4 w-4 text-yellow-500" />
-                  </CardHeader>
-                  <CardContent className="z-10">
-                    <div className="text-3xl font-bold">
-                      {latestSensor
-                        ? formatNum(latestSensor.ldr, 0)
-                          ? `${formatNum(latestSensor.ldr, 0)} lux`
-                          : "—"
-                        : "—"}
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {latestSensor
-                        ? Number(latestSensor.ldr) > 500
-                          ? "Bright"
-                          : "Normal"
-                        : "No data"}
-                    </p>
-                  </CardContent>
-                </Card>
-                <Card className="rounded-2xl border-none shadow-sm bg-white dark:bg-zinc-950 overflow-hidden relative">
-                  <div className="absolute top-0 right-0 w-24 h-24 bg-cyan-500/10 rounded-bl-full z-0" />
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 z-10">
-                    <CardTitle className="text-sm font-medium text-zinc-500">
-                      Rain Intensity
-                    </CardTitle>
-                    <CloudRain className="h-4 w-4 text-cyan-500" />
-                  </CardHeader>
-                  <CardContent className="z-10">
-                    <div className="text-3xl font-bold">
-                      {latestSensor
-                        ? (() => {
-                            const r = latestSensor.hujan;
-                            if (r === null || r === undefined) return "—";
-                            if (typeof r === "number")
-                              return `${formatNum(r)} mm/h`;
-                            if (typeof r === "boolean")
-                              return r ? "Raining" : "Clear";
-                            return String(r);
-                          })()
-                        : "—"}
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {latestSensor
-                        ? Number(latestSensor.hujan ?? 0) > 0
-                          ? "Raining"
-                          : "No rain detected"
-                        : "No data"}
-                    </p>
-                  </CardContent>
-                </Card>
+                {stats?.map((stat, i) => (
+                  <Card key={i} className="rounded-2xl border-none shadow-sm overflow-hidden">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                      <CardTitle className="text-sm font-medium text-zinc-500">{stat.title}</CardTitle>
+                      <div className={`p-2 rounded-lg ${stat.color.replace('bg-', 'text-').replace('/10', '')} bg-zinc-100 dark:bg-zinc-900`}>
+                        {stat.icon}
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-3xl font-bold">{stat.value}</div>
+                      <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                        {stat.desc}
+                      </p>
+                    </CardContent>
+                  </Card>
+                ))}
               </div>
 
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7 w-full">
-                <Card className="md:col-span-2 lg:col-span-4 rounded-2xl border-none shadow-sm bg-white dark:bg-zinc-950">
-                  <CardHeader>
-                    <CardTitle>Hourly Sensor Data</CardTitle>
-                    <CardDescription>
-                      Temperature, Humidity and Light progression.
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="pl-0 pb-4 w-full">
-                    <div style={{ width: "100%", height: 300 }}>
-                      <ResponsiveContainer width="100%" height="100%">
-                        <AreaChart
-                          data={chartData}
-                          margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
-                        >
-                          <defs>
-                            <linearGradient
-                              id="colorTemp"
-                              x1="0"
-                              y1="0"
-                              x2="0"
-                              y2="1"
-                            >
-                              <stop
-                                offset="5%"
-                                stopColor="#f59e0b"
-                                stopOpacity={0.3}
-                              />
-                              <stop
-                                offset="95%"
-                                stopColor="#f59e0b"
-                                stopOpacity={0}
-                              />
-                            </linearGradient>
-                          </defs>
-                          <XAxis
-                            dataKey="time"
-                            stroke="#888888"
-                            fontSize={12}
-                            tickLine={false}
-                            axisLine={false}
-                          />
-                          <YAxis
-                            stroke="#888888"
-                            fontSize={12}
-                            tickLine={false}
-                            axisLine={false}
-                            tickFormatter={(value) => `${value}`}
-                          />
-                          <CartesianGrid
-                            strokeDasharray="3 3"
-                            vertical={false}
-                            stroke="#e5e7eb"
-                          />
-                          <Tooltip
-                            contentStyle={{
-                              borderRadius: "8px",
-                              border: "none",
-                              boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
-                            }}
-                          />
-                          <Area
-                            type="monotone"
-                            dataKey="temp"
-                            stroke="#f59e0b"
-                            strokeWidth={3}
-                            fillOpacity={1}
-                            fill="url(#colorTemp)"
-                          />
-                          <Area
-                            type="monotone"
-                            dataKey="humidity"
-                            stroke="#3b82f6"
-                            strokeWidth={2}
-                            fillOpacity={0.1}
-                            fill="#3b82f6"
-                          />
-                        </AreaChart>
-                      </ResponsiveContainer>
-                    </div>
-                  </CardContent>
-                </Card>
+              {/* 2. MAIN CHARTS & SERVO STATUS - Layout Grid Campuran */}
+              <div className="grid gap-6 lg:grid-cols-3">
 
-                <Card className="md:col-span-2 lg:col-span-3 rounded-2xl border-none shadow-sm bg-white dark:bg-zinc-950">
-                  <CardHeader>
-                    <CardTitle>Servo Status</CardTitle>
-                    <CardDescription>
-                      Current clothesline position
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="flex flex-col items-center justify-center h-70">
-                    <div
-                      className={`w-40 h-40 rounded-full flex flex-col items-center justify-center border-8 ${servoState === "extended" ? "border-amber-400 bg-amber-50 dark:bg-amber-900/20" : "border-zinc-300 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900"} transition-all duration-500`}
-                    >
-                      <Sun
-                        className={`w-12 h-12 ${servoState === "extended" ? "text-amber-500" : "text-zinc-400"} mb-2`}
-                      />
-                      <span className="font-bold text-lg">
-                        {servoState === "extended" ? "EXTENDED" : "RETRACTED"}
-                      </span>
-                      <span className="text-xs text-muted-foreground">
-                        {servoState === "extended" ? "(Drying)" : "(Protected)"}
-                      </span>
-                    </div>
-                    <div className="mt-8 flex gap-4 w-full">
-                      <div className="flex-1 text-center">
-                        <div className="text-sm font-medium text-muted-foreground">
-                          Mode
-                        </div>
-                        <div className="font-semibold capitalize">
-                          {servoMode}
+                {/* Kolom Kiri & Tengah: Charts (Temperature & Humidity) */}
+                <div className="lg:col-span-2 space-y-6">
+                  <div className="grid gap-6 md:grid-cols-2">
+                    <SensorChart
+                      data={chartData}
+                      title="Temperature"
+                      config={[{ key: "suhu", name: "Temp", color: "#3b82f6", gradientId: "g-suhu", unit: "°C" }]}
+                      isOnline={isOnline}
+                    />
+                    <SensorChart
+                      data={chartData}
+                      title="Humidity"
+                      config={[{ key: "lembab", name: "Hum", color: "#a855f7", gradientId: "g-lembab", unit: "%" }]}
+                      isOnline={isOnline}
+                    />
+                  </div>
+
+                  {/* Light Level mengambil lebar penuh di kolom chart */}
+                  <SensorChart
+                    data={chartData}
+                    title="Light Level"
+                    desc="Current ambient light intensity"
+                    config={[{ key: "ldr", name: "Light", color: "#eab308", gradientId: "g-ldr", unit: "lux" }]}
+                    isOnline={isOnline}
+                  />
+                </div>
+
+                {/* Kolom Kanan: Servo Status & Control Summary */}
+                <div className="lg:col-span-1">
+                  <Card className="rounded-2xl border-none shadow-sm bg-white dark:bg-zinc-950 h-full">
+                    <CardHeader>
+                      <CardTitle>Servo Status</CardTitle>
+                      <CardDescription>Clothesline position</CardDescription>
+                    </CardHeader>
+                    <CardContent className="flex flex-col items-center justify-between pb-8">
+                      <div className="relative flex items-center justify-center mt-4">
+                        {/* Background Circle Decorative */}
+                        <div className={`absolute w-48 h-48 rounded-full opacity-10 blur-2xl ${servoState === "extended" ? "bg-amber-500" : "bg-zinc-500"}`} />
+
+                        <div className={`w-40 h-40 rounded-full flex flex-col items-center justify-center border-8 z-10 transition-all duration-700 ${servoState === "extended"
+                          ? "border-amber-400 bg-amber-50 dark:bg-amber-900/20 shadow-[0_0_20px_rgba(251,191,36,0.2)]"
+                          : "border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900"
+                          }`}>
+                          <Sun className={`w-12 h-12 ${servoState === "extended" ? "text-amber-500" : "text-zinc-400"} mb-1`} />
+                          <span className="font-black text-xl tracking-tight">
+                            {servoState === "extended" ? "EXTENDED" : "RETRACTED"}
+                          </span>
+                          <span className="text-[10px] uppercase font-bold text-muted-foreground">
+                            {servoState === "extended" ? "Drying Mode" : "Safe Mode"}
+                          </span>
                         </div>
                       </div>
-                      <div className="w-px h-10 bg-zinc-200 dark:bg-zinc-800" />
-                      <div className="flex-1 text-center">
-                        <div className="text-sm font-medium text-muted-foreground">
-                          Last Action
+
+                      <div className="grid grid-cols-2 gap-4 w-full mt-12 pt-6 border-t border-zinc-100 dark:border-zinc-800">
+                        <div className="text-center">
+                          <p className="text-[10px] font-bold text-zinc-400 uppercase">System Mode</p>
+                          <p className="font-bold capitalize text-sm">{servoMode}</p>
                         </div>
-                        <div className="font-semibold">10 mins ago</div>
+                        <div className="text-center border-l border-zinc-100 dark:border-zinc-800">
+                          <p className="text-[10px] font-bold text-zinc-400 uppercase">Last Action</p>
+                          <p className="font-bold text-sm">10m ago</p>
+                        </div>
                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                    </CardContent>
+                  </Card>
+                </div>
+
               </div>
             </TabsContent>
 

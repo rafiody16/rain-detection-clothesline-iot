@@ -14,7 +14,7 @@ DHT dht(DHTPIN, DHTTYPE);
 Servo servoJemuran;
 
 // LED indikator
-#define R   25
+#define R   26
 #define G   32
 #define B   33
 
