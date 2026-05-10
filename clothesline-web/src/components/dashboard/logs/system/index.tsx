@@ -32,6 +32,7 @@ export default function SystemLogsPage({logs = []}: {logs?: SystemLog[]}) {
       case "ERROR": return "text-red-400";
       case "EVENT": return "text-blue-400";
       case "DEBUG": return "text-zinc-400";
+      case "INFO": return "text-green-400";
       default: return "text-green-400";
     }
   }
@@ -77,17 +78,17 @@ export default function SystemLogsPage({logs = []}: {logs?: SystemLog[]}) {
               <CardDescription>Event traces for servo actions and sensor failures.</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="bg-black/90 text-green-400 p-4 rounded-lg font-mono text-sm overflow-x-auto">
+              <div className="bg-black/90 text-green-400 p-4 rounded-lg font-mono text-sm h-fit max-h-[300px] overflow-y-auto scrollbar-thin scrollbar-thumb-zinc-800 dark:scrollbar-thumb-zinc-600">
                 {logs.length === 0 ? (
                   <div className="text-zinc-600 italic">Waiting for incoming logs...</div>
                 ) : (
                   logs.map((log) => (
-                    <div key={log.id} className="mb-1 flex gap-2">
+                    <div key={log.id} className="mb-1 flex gap-2 hover:bg-zinc-800/50 transition-colors">
                       <span className="text-zinc-500 shrink-0">[{log.timestamp}]</span>
                       <span className={`font-bold shrink-0 ${getLogColor(log.level)}`}>
                         {log.level}:
                       </span>
-                      <span className="text-zinc-300">{log.message}</span>
+                      <span className="text-zinc-300 break-all">{log.message}</span>
                     </div>
                   ))
                 )}
