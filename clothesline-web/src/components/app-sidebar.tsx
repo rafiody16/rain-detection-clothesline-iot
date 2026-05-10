@@ -108,11 +108,6 @@ const data = {
   ],
   projects: [
     {
-      name: "Weather Logs",
-      url: "/dashboard/logs/weather",
-      icon: Sun,
-    },
-    {
       name: "System Logs",
       url: "/dashboard/logs/system",
       icon: Settings,
