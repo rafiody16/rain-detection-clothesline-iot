@@ -3,6 +3,7 @@ import * as React from "react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { ChevronLeftIcon, ChevronRightIcon, MoreHorizontalIcon } from "lucide-react"
+import { Input } from "@/components/ui/input"
 
 function Pagination({ className, ...props }: React.ComponentProps<"nav">) {
   return (
@@ -118,12 +119,29 @@ function PaginationEllipsis({
   )
 }
 
+function PaginationInput({
+  className,
+  ...props
+}: React.ComponentProps<typeof Input>) {
+  return (
+    <Input
+      type="number"
+      min={1}
+      aria-label="Page number"
+      data-slot="pagination-input"
+      className={cn("w-12 h-8 text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none", className)}
+      {...props}
+    />
+  )
+}
+
 export {
   Pagination,
   PaginationContent,
   PaginationEllipsis,
   PaginationItem,
   PaginationLink,
+  PaginationInput,
   PaginationNext,
   PaginationPrevious,
 }

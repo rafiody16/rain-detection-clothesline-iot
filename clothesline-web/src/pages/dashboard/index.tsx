@@ -5,59 +5,14 @@ import { useEffect, useState, useMemo } from "react";
 import { subHours, subDays, subWeeks, subMonths, subYears, isAfter } from "date-fns";
 import { CloudRain, Sun, ThermometerSun, Wind } from "lucide-react";
 import { formatNum } from "@/lib/format-number";
-const Homepage = () => {
-    const [isOnline, setIsOnline] = useState<boolean>(false);
-    const [latestData, setLatestData] = useState<any>(null);
-    const [rawHistory, setRawHistory] = useState<any[]>([]);
+import DashboardLayout from "@/components/dashboard/layout";
+import { useMqtt } from "@/contexts/mqtt-context";
 
-    const normalize = (item: any) => ({
-        timestampValue: Date.now(), // Gunakan waktu lokal saat data diterima
-        suhu: item.suhu ?? item.temperature ?? 0,
-        lembab: item.lembab ?? item.humidity ?? 0,
-        ldr: item.ldr ?? item.light ?? 0,
-        hujan: item.hujan ?? item.rain ?? false,
-    });
+const DashboardContent = () => {
+    const {latestData, rawHistory, isOnline} = useMqtt();
+    console.log("Latest Data:", latestData);
+    console.log("Raw History:", rawHistory);
 
-    useEffect(() => {
-    let lastDataTimestamp = Date.now();
-
-    const heartbeatCheck = setInterval(() => {
-        const now = Date.now();
-        if (now - lastDataTimestamp > 10000) {
-            setIsOnline(false);
-        }
-    }, 5000); 
-
-    const client = connectMQTT((topic, message) => {
-        const msgStr = message.toString();
-        if (topic === 'jemuran/status') {
-            if (msgStr.includes("Online")) {
-                setIsOnline(true);
-                lastDataTimestamp = Date.now(); 
-            } else if (msgStr.includes("Offline")) {
-                setIsOnline(false);
-            }
-        }
-        
-        if (topic === 'jemuran/data') {
-            lastDataTimestamp = Date.now(); 
-            setIsOnline(true); 
-
-            try {
-                const parsed = normalize(JSON.parse(msgStr));
-                setLatestData(parsed);
-                setRawHistory(prev => [...prev, parsed].slice(-200));
-            } catch (e) { 
-                console.error("Parse error:", e); 
-            }
-        }
-    });
-
-    return () => { 
-        clearInterval(heartbeatCheck); 
-        client?.end(); 
-    };
-}, []);
     const stats = [
         {
             title: "Temperature",
@@ -87,13 +42,23 @@ const Homepage = () => {
             color: "bg-cyan-500/10",
             desc: latestData?.hujan ? "Raining" : "No rain"
         }
-    ]
-
+    ];
 
     return (
-        <div>
-            <Dashboard isOnline={isOnline} latestData={latestData} chartData={rawHistory} stats={stats} />
-        </div>
+        <Dashboard isOnline={isOnline} latestData={latestData} chartData={rawHistory} stats={stats} />
+    );
+};
+
+const Homepage = () => {
+    const breadcrumbs = [
+        { label: "Dashboard", href: "/dashboard" },
+        { label: "Smart Clothesline" },
+    ];
+    
+    return (
+        <DashboardLayout breadcrumbs={breadcrumbs}>
+            <DashboardContent />
+        </DashboardLayout>
     );
 };
 

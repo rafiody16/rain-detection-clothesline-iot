@@ -95,7 +95,7 @@ export default function Home() {
                 <AnimatedGroup variants={transitionVariants}>
                   <div
                     className="hover:bg-background dark:hover:border-t-border bg-muted group mx-auto flex w-fit items-center gap-4 rounded-full border p-1 pl-4 shadow-md shadow-zinc-950/5 transition-colors duration-300 dark:border-t-white/5 dark:shadow-zinc-950">
-                    <span className="flex h-2 w-2 rounded-full bg-blue-600 animate-pulse"></span>
+                    <span className="flex h-2 w-2 rounded-full bg-primary animate-pulse"></span>
                     <span className="text-foreground text-sm">IoT Powered Clothesline System</span>
                   </div>
                 </AnimatedGroup>
@@ -168,7 +168,7 @@ export default function Home() {
                 { icon: Sun, title: "Smart Scheduling", desc: "Set timers or let the AI decide the best time to dry." }
               ].map((feature, i) => (
                 <div key={i} className="flex flex-col items-center text-center p-8 rounded-3xl bg-background border shadow-sm transition-transform hover:-translate-y-1 hover:shadow-md">
-                  <div className="w-12 h-12 rounded-2xl bg-zinc-100 dark:bg-zinc-900 flex items-center justify-center mb-6 text-blue-600 dark:text-blue-400">
+                  <div className="w-12 h-12 rounded-2xl bg-accent dark:bg-foreground flex items-center justify-center mb-6 text-base dark:text-background">
                     <feature.icon className="w-6 h-6" />
                   </div>
                   <h3 className="text-xl font-bold text-foreground mb-3">{feature.title}</h3>
@@ -180,7 +180,7 @@ export default function Home() {
             <div id="features" className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
               <div>
                 <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-6">
-                  Complete control from your <span className="text-blue-600 dark:text-blue-500">dashboard</span>
+                  Complete control from your <span className="text-primary dark:text-ring ">dashboard</span>
                 </h2>
                 <p className="text-lg text-muted-foreground mb-8">
                   Monitor all your sensors in real-time. Configure thresholds for temperature, humidity, light, and rain intensity to customize how your clothesline behaves.
@@ -193,7 +193,7 @@ export default function Home() {
                     "Remote servo control from anywhere"
                   ].map((item, i) => (
                     <li key={i} className="flex items-start gap-3">
-                      <CheckCircle2 className="w-6 h-6 text-blue-500 shrink-0" />
+                      <CheckCircle2 className="w-6 h-6 text-primary shrink-0" />
                       <span className="text-foreground font-medium">{item}</span>
                     </li>
                   ))}
@@ -210,18 +210,18 @@ export default function Home() {
                     <div className="bg-background rounded-xl p-4 flex flex-col justify-between shadow-sm border">
                       <div className="text-sm font-medium text-muted-foreground">Temperature</div>
                       <div className="text-4xl font-bold text-foreground">32°C</div>
-                      <div className="text-xs text-amber-500 flex items-center gap-1"><Sun className="w-3 h-3" /> Sunny</div>
+                      <div className="text-xs text-destructive flex items-center gap-1"><Sun className="w-3 h-3" /> Sunny</div>
                     </div>
                     <div className="bg-background rounded-xl p-4 flex flex-col justify-between shadow-sm border">
                       <div className="text-sm font-medium text-muted-foreground">Humidity</div>
                       <div className="text-4xl font-bold text-foreground">45%</div>
-                      <div className="text-xs text-blue-500 flex items-center gap-1"><Wind className="w-3 h-3" /> Ideal</div>
+                      <div className="text-xs text-primary flex items-center gap-1"><Wind className="w-3 h-3" /> Ideal</div>
                     </div>
                     <div className="bg-background rounded-xl p-4 col-span-2 shadow-sm border flex items-center justify-between">
                       <div>
                         <div className="text-sm font-medium text-muted-foreground mb-1">System Status</div>
                         <div className="flex items-center gap-2">
-                          <span className="flex h-3 w-3 rounded-full bg-green-500"></span>
+                          <span className="flex h-3 w-3 rounded-full bg-green-500 animate-pulse"></span>
                           <span className="font-bold text-foreground">Active (Auto Mode)</span>
                         </div>
                       </div>
@@ -233,7 +233,7 @@ export default function Home() {
                   </div>
                 </div>
                 {/* Decorative elements */}
-                <div className="absolute -top-6 -right-6 w-24 h-24 bg-blue-500/20 rounded-full blur-2xl -z-10" />
+                <div className="absolute -top-6 -right-6 w-24 h-24 bg-primary/20 rounded-full blur-2xl -z-10" />
                 <div className="absolute -bottom-6 -left-6 w-32 h-32 bg-amber-500/20 rounded-full blur-2xl -z-10" />
               </div>
             </div>
@@ -244,7 +244,7 @@ export default function Home() {
       <footer className="py-12 px-6 lg:px-14 border-t bg-background">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
           <div className="flex items-center gap-2">
-            <CloudRain className="w-5 h-5 text-blue-600" />
+            <CloudRain className="w-5 h-5 text-primary" />
             <span className="text-lg font-bold text-foreground">SmartLine</span>
           </div>
           <p className="text-sm text-muted-foreground">

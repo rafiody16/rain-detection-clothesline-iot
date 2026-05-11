@@ -3,13 +3,14 @@
 import { useEffect, useState } from "react";
 import ControlPage from "@/components/dashboard/control";
 import { toast } from "sonner";
+import DashboardLayout from "@/components/dashboard/layout";
 
 export default function Control() {
   const [currentStatus, setCurrentStatus] = useState<"extended" | "retracted" | "moving">("retracted");
 
   const fetchCurrentStatus = async () => {
     try {
-      const res = await fetch("/api/iot"); 
+      const res = await fetch("/api/iot");
       const data = await res.json();
       if (Array.isArray(data) && data.length > 0) {
         const latest = data[0];
@@ -44,10 +45,17 @@ export default function Control() {
     });
   };
 
+  const breadcrumbs = [
+    { label: "Dashboard", href: "/dashboard" },
+    { label: "Control Panel" },
+  ];
+
   return (
-    <ControlPage 
-      currentStatus={currentStatus} 
-      onCommand={handleSendCommand} 
-    />
+    <DashboardLayout breadcrumbs={breadcrumbs}>
+      <ControlPage
+        currentStatus={currentStatus}
+        onCommand={handleSendCommand}
+      />
+    </DashboardLayout>
   );
 }

@@ -1,6 +1,11 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
+@import "./themes/bubblegum.css";
+@import "./themes/soft-pop.css";
+@import "./themes/nature.css";
+@import "./themes/ocean-breeze.css";
+@import "./themes/neo-brutal.css";
 
 @custom-variant dark (&:is(.dark *));
 

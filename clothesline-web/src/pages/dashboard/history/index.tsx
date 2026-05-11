@@ -1,7 +1,7 @@
 "use client"
 import { useEffect, useState } from "react";
 import HistoryPage from "@/components/dashboard/history";
-import { format } from "date-fns";
+import DashboardLayout from "@/components/dashboard/layout";
 
 const History = () => {
     const [logs, setLogs] = useState<any>([]);
@@ -27,7 +27,7 @@ const History = () => {
                         light: item.ldr ?? item.light ?? 0,
                         rain: item.hujan ?? item.rain ?? false,
                     }))
-                    .filter((item)=> item.timestamp !== null && item.timestamp !== undefined && item.timestamp !== "-"  )
+                    .filter((item) => item.timestamp !== null && item.timestamp !== undefined && item.timestamp !== "-")
                     .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 
                 if (!cancelled) setLogs(() => sorted);
@@ -47,8 +47,15 @@ const History = () => {
         };
     }, []);
 
+    const breadcrumbs = [
+        { label: "Dashboard", href: "/dashboard" },
+        { label: "History" },
+    ];
+
     return (
-        <HistoryPage logs={logs} isLoading={isLoading} date={date} onDateChange={setDate} />
+        <DashboardLayout breadcrumbs={breadcrumbs}>
+            <HistoryPage logs={logs} isLoading={isLoading} date={date} onDateChange={setDate} />
+        </DashboardLayout>
     )
 }
 
