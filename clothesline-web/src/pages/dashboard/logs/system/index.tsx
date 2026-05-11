@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import SystemLogsPage from "@/components/dashboard/logs/system";
 import { connectMQTT } from "@/utils/mqtt";
+import DashboardLayout from "@/components/dashboard/layout";
 
 interface SystemLog {
     id: string;
@@ -58,7 +59,16 @@ const SystemLogs = () => {
         };
     }, []);
 
-    return <SystemLogsPage logs={logs} />;
+    const breadcrumbs = [
+        { label: "Dashboard", href: "/dashboard" },
+        { label: "System Logs" },
+    ];
+
+    return (
+        <DashboardLayout breadcrumbs={breadcrumbs}>
+            <SystemLogsPage logs={logs} />
+        </DashboardLayout>
+    );
 }
 
 export default SystemLogs;

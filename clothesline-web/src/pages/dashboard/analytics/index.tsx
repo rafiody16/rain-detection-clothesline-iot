@@ -1,10 +1,11 @@
 "use client";
 import AnalyticsPage from "@/components/dashboard/analytics";
+import DashboardLayout from "@/components/dashboard/layout";
 import { BarChart3, Droplets, RotateCcw } from "lucide-react";
 
 
 const Analytics = () => {
-    const dataStats = [
+  const dataStats = [
     {
       title: "Rata-rata Suhu",
       description: "24 Jam Terakhir",
@@ -42,9 +43,15 @@ const Analytics = () => {
       colorClass: "bg-purple-100 text-purple-600 dark:bg-purple-900/30",
     },
   ];
-    return (
-        <AnalyticsPage stats={dataStats} />
-    )
+  const breadcrumbs = [
+    { label: "Dashboard", href: "/dashboard" },
+    { label: "Analytics" },
+  ];
+  return (
+    <DashboardLayout breadcrumbs={breadcrumbs}>
+      <AnalyticsPage stats={dataStats} />
+    </DashboardLayout>
+  )
 }
 
 export default Analytics

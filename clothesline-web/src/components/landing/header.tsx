@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import React from 'react'
 import { cn } from '@/lib/utils'
 import { ModeToggle } from '../mode-toggle'
+import { ThemeSelector } from '../theme-selector'
 
 const menuItems = [
     { name: 'Home', href: '/' },
@@ -104,7 +105,8 @@ export const HeroHeader = () => {
                                         <span>Dashboard</span>
                                     </Link>
                                 </Button>
-                                <div className="flex items-center">
+                                <div className="flex items-center gap-2">
+                                    <ThemeSelector />
                                     <ModeToggle />
                                 </div>
                             </div>

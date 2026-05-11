@@ -35,7 +35,7 @@ interface SensorChartProps {
 
 export function SensorChart({ data, config, title, desc, isOnline }: SensorChartProps) {
     return (
-        <Card className="rounded-2xl border-none shadow-sm bg-white dark:bg-zinc-950 overflow-hidden">
+        <Card className="rounded-2xl border-none shadow-sm overflow-hidden">
             <CardHeader className="pb-2">
                 <div className="flex items-center justify-between">
                     <div>

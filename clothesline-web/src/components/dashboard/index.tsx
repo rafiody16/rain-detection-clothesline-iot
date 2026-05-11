@@ -1,22 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { AppSidebar } from "@/components/app-sidebar";
-import { ModeToggle } from "@/components/mode-toggle";
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
-import { Separator } from "@/components/ui/separator";
-import {
-  SidebarInset,
-  SidebarProvider,
-  SidebarTrigger,
-} from "@/components/ui/sidebar";
 import {
   Card,
   CardContent,
@@ -59,6 +43,9 @@ import {
 import { SensorChart } from "../charts/sensor-chart";
 import { Badge } from "../ui/badge";
 import { px } from "motion/react";
+import { DashboardHeader } from "../dashboard-header";
+import { useDateTime } from "@/hooks/use-date-time";
+import { useMqtt } from "@/contexts/mqtt-context";
 
 interface DashboardProps {
   isOnline: boolean;
@@ -70,93 +57,9 @@ interface DashboardProps {
 export default function Dashboard({ isOnline, latestData, chartData, stats }: DashboardProps) {
   const [servoMode, setServoMode] = useState<"auto" | "manual" | "timer">("auto");
   const [servoState, setServoState] = useState<"extended" | "retracted">("retracted");
-  const [time, setTime] = useState<Date>(new Date());
-  const [isMounted, setIsMounted] = useState(false);
 
-  useEffect(() => {
-    const raf = requestAnimationFrame(() => {
-      setIsMounted(true);
-    });
-    const tick = () => setTime(new Date());
-    tick();
-    const timer = setInterval(tick, 1000);
-    return () => {
-      clearInterval(timer);
-      cancelAnimationFrame(raf);
-    };
-  }, []);
   return (
-    <SidebarProvider>
-      <AppSidebar />
-      <SidebarInset>
-        <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 border-b border-zinc-200 dark:border-zinc-800">
-          <div className="flex items-center justify-between w-full px-4">
-            <div className="flex items-center gap-2">
-              <SidebarTrigger className="-ml-1" />
-              <Separator
-                orientation="vertical"
-                className="mr-2 data-[orientation=vertical]:h-4"
-              />
-              <Breadcrumb>
-                <BreadcrumbList>
-                  <BreadcrumbItem className="hidden md:block">
-                    <BreadcrumbLink href="/dashboard">Dashboard</BreadcrumbLink>
-                  </BreadcrumbItem>
-                  <BreadcrumbSeparator className="hidden md:block" />
-                  <BreadcrumbItem>
-                    <BreadcrumbPage>Smart Clothesline</BreadcrumbPage>
-                  </BreadcrumbItem>
-                </BreadcrumbList>
-              </Breadcrumb>
-            </div>
-            <div className="flex items-center gap-6">
-              <div className="flex items-center gap-2 pr-2 border-r border-zinc-200 dark:border-zinc-800 h-8">
-                <div className="flex items-center gap-2 px-3 py-1 bg-zinc-100 dark:bg-zinc-900 rounded-full transition-colors duration-500">
-                  <span className="relative flex h-2 w-2">
-                    {isOnline && (
-                      <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${isOnline ? "bg-green-400" : "bg-zinc-400"
-                        }`}></span>
-                    )}
-                    <span className={`relative inline-flex rounded-full h-2 w-2 transition-colors duration-500 ${isOnline ? "bg-green-500" : "bg-zinc-500"
-                      }`}></span>
-                  </span>
-
-                  <span className="text-[10px] font-bold text-zinc-600 dark:text-zinc-400 uppercase tracking-wider">
-                    {isOnline ? "Online" : "Offline"}
-                  </span>
-                </div>
-              </div>
-              {isMounted && time ? (
-                <>
-                  <div className="flex flex-col items-end justify-center h-full">
-                    {/* JAM: Di mobile hanya jam:menit, di desktop tampilkan detik */}
-                    <div className="font-semibold text-sm text-zinc-900 dark:text-zinc-50 leading-tight tabular-nums">
-                      <span className="sm:hidden">
-                        {time.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}
-                      </span>
-                      <span className="hidden sm:inline">
-                        {time.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
-                      </span>
-                    </div>
-
-                    {/* TANGGAL: Di mobile format singkat (Minggu, 10 Mei), di desktop format lengkap */}
-                    <div className="text-[10px] text-zinc-900 dark:text-zinc-50 text-muted-foreground font-medium leading-tight tabular-nums">
-                      <span className="sm:hidden">
-                        {time.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" })}
-                      </span>
-                      <span className="hidden sm:inline">
-                        {time.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "short", year: "numeric" })}
-                      </span>
-                    </div>
-                  </div>
-                </>) : (
-                <div className="w-16 h-8 bg-zinc-200 dark:bg-zinc-800 rounded-md animate-pulse" />
-              )}
-              <ModeToggle />
-            </div>
-          </div>
-        </header>
-
+    <>
         <div className="flex flex-1 flex-col gap-4 p-4 md:p-8 pt-4">
           <Tabs defaultValue="overview" className="w-full">
             <TabsList variant="line">
@@ -219,7 +122,7 @@ export default function Dashboard({ isOnline, latestData, chartData, stats }: Da
 
                 {/* Kolom Kanan: Servo Status & Control Summary */}
                 <div className="lg:col-span-1">
-                  <Card className="rounded-2xl border-none shadow-sm bg-white dark:bg-zinc-950 h-full">
+                  <Card className="rounded-2xl border-none shadow-sm h-full">
                     <CardHeader>
                       <CardTitle>Servo Status</CardTitle>
                       <CardDescription>Clothesline position</CardDescription>
@@ -230,8 +133,8 @@ export default function Dashboard({ isOnline, latestData, chartData, stats }: Da
                         <div className={`absolute w-48 h-48 rounded-full opacity-10 blur-2xl ${servoState === "extended" ? "bg-amber-500" : "bg-zinc-500"}`} />
 
                         <div className={`w-40 h-40 rounded-full flex flex-col items-center justify-center border-8 z-10 transition-all duration-700 ${servoState === "extended"
-                          ? "border-amber-400 bg-amber-50 dark:bg-amber-900/20 shadow-[0_0_20px_rgba(251,191,36,0.2)]"
-                          : "border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900"
+                          ? "border-amber-400 shadow-[0_0_20px_rgba(251,191,36,0.2)]"
+                          : "border-zinc-200 dark:border-zinc-800 "
                           }`}>
                           <Sun className={`w-12 h-12 ${servoState === "extended" ? "text-amber-500" : "text-zinc-400"} mb-1`} />
                           <span className="font-black text-xl tracking-tight">
@@ -486,7 +389,6 @@ export default function Dashboard({ isOnline, latestData, chartData, stats }: Da
             </TabsContent>
           </Tabs>
         </div>
-      </SidebarInset>
-    </SidebarProvider>
+        </>
   );
 }

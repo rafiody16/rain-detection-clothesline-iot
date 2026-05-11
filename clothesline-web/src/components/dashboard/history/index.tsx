@@ -1,22 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { AppSidebar } from "@/components/app-sidebar";
-import { ModeToggle } from "@/components/mode-toggle";
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
-import { Separator } from "@/components/ui/separator";
-import {
-  SidebarInset,
-  SidebarProvider,
-  SidebarTrigger,
-} from "@/components/ui/sidebar";
 import {
   Card,
   CardContent,
@@ -36,6 +20,7 @@ import { Field, FieldLabel } from "@/components/ui/field";
 import {
   Pagination,
   PaginationContent,
+  PaginationInput,
   PaginationItem,
   PaginationNext,
   PaginationPrevious,
@@ -48,6 +33,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { ThemeSelector } from "@/components/theme-selector";
+import { DashboardHeader } from "@/components/dashboard-header";
+import { useDateTime } from "@/hooks/use-date-time";
 
 type HistoryPageProps = {
   logs: any[];
@@ -59,6 +47,7 @@ type HistoryPageProps = {
 export default function HistoryPage({ logs, isLoading, date, onDateChange }: HistoryPageProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(25);
+  const [inputPage, setInputPage] = useState(currentPage.toString());
 
   // console.log("Initial logs prop:", logs);
 
@@ -93,34 +82,23 @@ export default function HistoryPage({ logs, isLoading, date, onDateChange }: His
     e.preventDefault();
     if (currentPage > 1) setCurrentPage(prev => prev - 1);
   };
-  return (
-    <SidebarProvider>
-      <AppSidebar />
-      <SidebarInset>
-        <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 border-b border-zinc-200 dark:border-zinc-800">
-          <div className="flex items-center justify-between w-full px-4">
-            <div className="flex items-center gap-2">
-              <SidebarTrigger className="-ml-1" />
-              <Separator
-                orientation="vertical"
-                className="mr-2 data-[orientation=vertical]:h-4"
-              />
-              <Breadcrumb>
-                <BreadcrumbList>
-                  <BreadcrumbItem className="hidden md:block">
-                    <BreadcrumbLink href="/dashboard">Dashboard</BreadcrumbLink>
-                  </BreadcrumbItem>
-                  <BreadcrumbSeparator className="hidden md:block" />
-                  <BreadcrumbItem>
-                    <BreadcrumbPage>Historical Data</BreadcrumbPage>
-                  </BreadcrumbItem>
-                </BreadcrumbList>
-              </Breadcrumb>
-            </div>
-            <ModeToggle />
-          </div>
-        </header>
 
+  useEffect(() => {
+    setInputPage(currentPage.toString());
+  }, [currentPage]);
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  if (e.key === "Enter") {
+    const val = parseInt(inputPage);
+    if (!isNaN(val) && val >= 1 && val <= totalPages) {
+      setCurrentPage(val);
+    } else {
+      setInputPage(currentPage.toString());
+    }
+  }
+};
+  return (
+    <>
         <div className="flex flex-1 flex-col gap-6 p-4 md:p-6">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
             <div className="flex items-center gap-3">
@@ -173,7 +151,7 @@ export default function HistoryPage({ logs, isLoading, date, onDateChange }: His
             <CardContent>
               <div className="hidden md:block rounded-md border">
                 <Table className="w-full text-sm text-left">
-                  <TableHeader className="bg-zinc-100 dark:bg-zinc-800">
+                  <TableHeader className="bg-accent dark:bg-accent/50">
                     <TableRow>
                       <TableHead className="font-bold text-center">Timestamp</TableHead>
                       <TableHead className="font-bold text-center">Temperature</TableHead>
@@ -279,7 +257,10 @@ export default function HistoryPage({ logs, isLoading, date, onDateChange }: His
                   <FieldLabel htmlFor="select-rows-per-page">Rows per page</FieldLabel>
                   <Select
                     value={itemsPerPage.toString()}
-                    onValueChange={(v) => setItemsPerPage(Number(v))}
+                    onValueChange={(v) => {
+                      setItemsPerPage(Number(v)); 
+                      setCurrentPage(1); 
+                    }}
                   >
                     <SelectTrigger className="w-20" id="select-rows-per-page">
                       <SelectValue />
@@ -296,9 +277,19 @@ export default function HistoryPage({ logs, isLoading, date, onDateChange }: His
                 </Field>
 
                 <div className="flex items-center gap-4">
-                  <span className="text-sm text-muted-foreground">
-                    Page {currentPage} of {totalPages || 1}
-                  </span>
+                  <div className="flex items-center gap-2">
+      <span className="text-sm text-muted-foreground whitespace-nowrap">Go to page</span>
+      <PaginationInput
+        value={inputPage}
+        onChange={(e) => setInputPage(e.currentTarget.value)}
+        onKeyDown={handleKeyDown}
+        max={totalPages}
+        className="h-8 w-14" 
+      />
+      <span className="text-sm text-muted-foreground whitespace-nowrap">
+        of {totalPages || 1}
+      </span>
+    </div>
                   <Pagination className="mx-0 w-auto">
                     <PaginationContent>
                       <PaginationItem>
@@ -328,7 +319,6 @@ export default function HistoryPage({ logs, isLoading, date, onDateChange }: His
             </CardContent>
           </Card>
         </div>
-      </SidebarInset>
-    </SidebarProvider>
+        </>
   );
 }
