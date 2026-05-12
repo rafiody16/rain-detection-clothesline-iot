@@ -34,13 +34,12 @@ import { SensorChart } from "../charts/sensor-chart";
 
 interface DashboardProps {
   isOnline: boolean;
-  // latestData: any;
+  latestData: any;
   chartData: any[];
   stats?: any[];
 }
-
-export default function Dashboard({ isOnline, // latestData,
-  chartData, stats }: DashboardProps) {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export default function Dashboard({ isOnline, latestData, chartData, stats }: DashboardProps) {
   const [servoMode, setServoMode] = useState<"auto" | "manual" | "timer">("auto");
   const [servoState, setServoState] = useState<"extended" | "retracted">("retracted");
 
