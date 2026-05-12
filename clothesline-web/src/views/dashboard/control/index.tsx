@@ -16,11 +16,15 @@ export default function ControlPage({ currentStatus, onCommand }: ControlPagePro
   const [lastAction, setLastAction] = useState<"MASUK" | "KELUAR">("MASUK");
   const [isMoving, setIsMoving] = useState(false);
 
-  useEffect(() => {
+  const [prevStatus, setPrevStatus] = useState(currentStatus);
+
+  if (currentStatus !== prevStatus) {
+    setPrevStatus(currentStatus);
+    
     if (currentStatus.includes("AUTO") && activeMode !== "otomatis") {
       setActiveMode("otomatis");
     }
-  }, [currentStatus]);
+  }
 
   const handleModeSelect = (mode: "otomatis" | "manual" | "jadwal") => {
     if (mode === "manual" && activeMode !== "manual") {
