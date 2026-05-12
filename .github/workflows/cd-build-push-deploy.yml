@@ -57,7 +57,7 @@ jobs:
             --zone ${{ env.GCE_ZONE }} \
             --project ${{ secrets.GCP_PROJECT_ID }} \
             --quiet \
-            command " \
+            --command " \
               docker pull docker.io/${{ env.IMAGE_NAME }}:${{ github.sha }} && \
               docker stop clothesline-web || true && \
               docker rm clothesline-web || true && \
