@@ -1,48 +1,65 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import ControlPage from "@/views/dashboard/control";
 import { toast } from "sonner";
 import DashboardLayout from "@/views/dashboard/layout";
+import mqtt from "mqtt";
 
 export default function Control() {
-  const [currentStatus, setCurrentStatus] = useState<"extended" | "retracted" | "moving">("retracted");
+  const clientRef = useRef<any>(null);
+  const [client, setClient] = useState(null);
+  const [statusAlat, setStatusAlat] = useState("Menunggu data...");
+  const [sensorData, setSensorData] = useState({
+    suhu: 0,
+    lembab: 0,
+    ldr: 0,
+    intensitasAir: 0,
+    cuacaBuruk: 0,
+    mode: "AUTO"
+  });
 
   useEffect(() => {
-    const fetchCurrentStatus = async () => {
-      try {
-        const res = await fetch("/api/iot");
-        const data = await res.json();
-        if (Array.isArray(data) && data.length > 0) {
-          const latest = data[0];
-          setCurrentStatus(latest.servo === 1 ? "extended" : "retracted");
+    const brokerUrl = 'ws://3.107.238.64:9001';
+    const mqttClientObj = mqtt.connect(brokerUrl);
+
+    clientRef.current = mqttClientObj;
+
+    mqttClientObj.on("connect", () => {
+      console.log("Connected to MQTT broker");
+      mqttClientObj.subscribe('jemuran/data');
+      mqttClientObj.subscribe('jemuran/status');
+    });
+
+    mqttClientObj.on("message", (topic, message) => {
+      const payload = message.toString();
+      if (topic === 'jemuran/data') {
+        try{
+          const parsedData = JSON.parse(payload);
+          setSensorData(parsedData);
+        } catch (error) {
+          console.error("Failed to parse sensor data:", error);
         }
-      } catch {
-        console.error("Failed to fetch status");
+      } else if (topic === 'jemuran/status') {
+        setStatusAlat(payload);
       }
-    };
-    fetchCurrentStatus();
+    });
+
+    return () => {
+      if (mqttClientObj) {
+        mqttClientObj.end();
+      }
+    }
   }, []);
 
-  const handleSendCommand = async (command: "extend" | "retract") => {
-    const value = command === "extend" ? 1 : 0;
-
-    const postPromise = fetch("/api/iot", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ servo: value }),
-    }).then(async (res) => {
-      if (!res.ok) throw new Error("Failed");
-      setCurrentStatus(command === "extend" ? "extended" : "retracted");
-      return res.json();
-    });
-
-    toast.promise(postPromise, {
-      loading: `Sending ${command} command to hardware...`,
-      success: `Hardware updated to ${command} position`,
-      error: "Communication error with microcontroller",
-    });
-  };
+  const kirimPerintah = (perintah: string) => {
+    if (clientRef.current) {
+      clientRef.current.publish('jemuran/kontrol', perintah);
+      toast.success(`Perintah "${perintah}" berhasil dikirim!`);
+    } else {
+      toast.error("Koneksi MQTT belum terhubung. Coba lagi nanti.");
+    }
+  }
 
   const breadcrumbs = [
     { label: "Dashboard", href: "/dashboard" },
@@ -52,8 +69,8 @@ export default function Control() {
   return (
     <DashboardLayout breadcrumbs={breadcrumbs}>
       <ControlPage
-        currentStatus={currentStatus}
-        onCommand={handleSendCommand}
+        currentStatus={statusAlat} 
+        onCommand={kirimPerintah}
       />
     </DashboardLayout>
   );

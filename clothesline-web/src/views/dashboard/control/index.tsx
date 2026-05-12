@@ -1,116 +1,184 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { PlayCircle, Loader2, ArrowUpCircle, ArrowDownCircle, Timer } from "lucide-react"
+import { Activity, Settings, History, Play, Square, Check, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { toast } from "sonner"
-import { Toaster } from "@/components/ui/sonner"
+import { exec } from "child_process"
 
-type ServoStatus = "extended" | "retracted" | "moving";
 interface ControlPageProps {
-  currentStatus: ServoStatus;
-  onCommand: (command: "extend" | "retract") => Promise<void>;
+  currentStatus: string;
+  onCommand: (command: "MASUK" | "KELUAR" | "AUTO") => void;
 }
 
 export default function ControlPage({ currentStatus, onCommand }: ControlPageProps) {
+  const [activeMode, setActiveMode] = useState<"otomatis" | "manual" | "jadwal">("otomatis");
+  const [lastAction, setLastAction] = useState<"MASUK" | "KELUAR">("MASUK");
   const [isMoving, setIsMoving] = useState(false);
 
-  const displayStatus: ServoStatus = useMemo(
-    () => (isMoving ? "moving" : currentStatus),
-    [isMoving, currentStatus]
-  );
+  const [prevStatus, setPrevStatus] = useState(currentStatus);
 
-  const handleControl = async (command: "extend" | "retract") => {
-    setIsMoving(true);
-    try {
-      await onCommand(command);
-      toast.success(`Clothesline ${command === "extend" ? "extending" : "retracting"}...`);
-    } catch {
-      toast.error(`Failed to ${command} clothesline. Please try again.`);
-    } finally {
-      setIsMoving(false);
+  if (currentStatus !== prevStatus) {
+    setPrevStatus(currentStatus);
+    
+    if (currentStatus.includes("AUTO") && activeMode !== "otomatis") {
+      setActiveMode("otomatis");
     }
-  };
+  }
 
+  const handleModeSelect = (mode: "otomatis" | "manual" | "jadwal") => {
+    if (mode === "manual" && activeMode !== "manual") {
+      const confirm = window.confirm("Are you sure you want to switch to manual mode? This will disable automatic sensor control.");
+      if (confirm) {
+        setActiveMode("manual");
+        executeCommand(lastAction);
+      }
+    } else if (mode === "otomatis") {
+      setActiveMode("otomatis");
+      onCommand("AUTO");
+    } else if (mode === "jadwal") {
+      setActiveMode("jadwal");
+      alert("Scheduling feature is not implemented yet.");
+    }
+  }
+
+  const executeCommand = (cmd: "MASUK" | "KELUAR") => {
+    setLastAction(cmd);
+    onCommand(cmd);
+
+    setIsMoving(true);
+    setTimeout(() => {
+      setIsMoving(false);
+    }, 3000);
+  }
+
+  const handleActionClick = (cmd: "MASUK" | "KELUAR") => {
+    if (activeMode === "otomatis") {
+      const confirm = window.confirm("You are currently in automatic mode. Do you want to switch to manual mode and execute this command?");
+      if (confirm) {
+        setActiveMode("manual");
+        executeCommand(cmd);
+      }
+    } else {
+      executeCommand(cmd);
+    }
+  }
   return (
-    <>
-      <Toaster position="top-center" richColors />
+    <div className="flex flex-1 flex-col gap-6 p-6 bg-[#0B0E14] text-slate-200 min-h-screen font-sans">
+      
+      {/* Header Info */}
+      <div className="border-b border-slate-800 pb-4">
+        <h2 className="text-xl font-semibold text-white">Pengaturan Jemuran</h2>
+        <p className="text-sm text-slate-400 mt-1">Kelola cara jemuran bekerja berdasarkan kondisi cuaca atau jadwal.</p>
+      </div>
 
-      <div className="flex flex-1 flex-col gap-6 p-6">
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 rounded-lg">
-            <PlayCircle className="w-6 h-6" />
+      {/* SECTION: Mode Operasi */}
+      <div>
+        <h3 className="text-md font-medium text-white mb-4">Pilih Mode Operasi</h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          
+          {/* Card Otomatis */}
+          <div 
+            onClick={() => handleModeSelect("otomatis")}
+            className={`flex flex-col items-center justify-center p-6 rounded-xl border cursor-pointer transition-all ${
+              activeMode === "otomatis" 
+                ? "bg-[#1E2336] border-blue-500" 
+                : "bg-[#131722] border-slate-800 hover:bg-[#1A1F2E]"
+            }`}
+          >
+            <Activity className={`w-8 h-8 mb-3 ${activeMode === "otomatis" ? "text-blue-400" : "text-slate-400"}`} />
+            <span className="font-semibold text-white">Otomatis</span>
+            <span className="text-xs text-slate-400 mt-1">Berbasis sensor</span>
           </div>
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Dedicated Control Panel</h1>
-            <p className="text-muted-foreground">Manage servo manually and set exact timer routines.</p>
+
+          {/* Card Manual */}
+          <div 
+            onClick={() => handleModeSelect("manual")}
+            className={`flex flex-col items-center justify-center p-6 rounded-xl border cursor-pointer transition-all ${
+              activeMode === "manual" 
+                ? "bg-[#1E1915] border-orange-500" 
+                : "bg-[#131722] border-slate-800 hover:bg-[#1A1F2E]"
+            }`}
+          >
+            <Settings className={`w-8 h-8 mb-3 ${activeMode === "manual" ? "text-orange-400" : "text-slate-400"}`} />
+            <span className="font-semibold text-white">Manual</span>
+            <span className="text-xs text-slate-400 mt-1">Kontrol manual</span>
           </div>
-        </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Card className="border-2 border-indigo-500/20">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                Manual Override
-                {displayStatus === "moving" && <Loader2 className="w-4 h-4 animate-spin text-indigo-500" />}
-              </CardTitle>
-              <CardDescription>Directly command the servo via API.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-col gap-4">
-                <div className="flex items-center justify-between p-3 bg-zinc-50 dark:bg-zinc-900 rounded-lg border">
-                  <span className="text-sm font-medium">Current Position:</span>
-                  <span className={`text-sm font-bold uppercase tracking-wider ${displayStatus === "extended" ? "text-green-500" : displayStatus === "retracted" ? "text-amber-500" : "text-indigo-500"
-                    }`}>
-                    {displayStatus}
-                  </span>
-                </div>
+          {/* Card Jadwal */}
+          <div 
+            onClick={() => handleModeSelect("jadwal")}
+            className={`flex flex-col items-center justify-center p-6 rounded-xl border cursor-pointer transition-all ${
+              activeMode === "jadwal" 
+                ? "bg-[#1E2336] border-purple-500" 
+                : "bg-[#131722] border-slate-800 hover:bg-[#1A1F2E]"
+            }`}
+          >
+            <History className={`w-8 h-8 mb-3 ${activeMode === "jadwal" ? "text-purple-400" : "text-slate-400"}`} />
+            <span className="font-semibold text-white">Jadwal</span>
+            <span className="text-xs text-slate-400 mt-1">Berbasis waktu</span>
+          </div>
 
-                <div className="flex gap-4">
-                  <Button
-                    className="w-full bg-amber-500 hover:bg-amber-600"
-                    disabled={displayStatus === "extended" || displayStatus === "moving"}
-                    onClick={() => handleControl("extend")}
-                  >
-                    <ArrowUpCircle className="mr-2 h-4 w-4" />
-                    Extend
-                  </Button>
-                  <Button
-                    className="w-full"
-                    variant="outline"
-                    disabled={displayStatus === "retracted" || displayStatus === "moving"}
-                    onClick={() => handleControl("retract")}
-                  >
-                    <ArrowDownCircle className="mr-2 h-4 w-4" />
-                    Retract
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Timer className="w-5 h-5" />
-                Quick Timer
-              </CardTitle>
-              <CardDescription>Set auto-retract schedule.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-3 gap-2">
-                {[1, 2, 4].map((hr) => (
-                  <Button key={hr} variant="outline" size="sm" onClick={() => toast(`Timer set for ${hr} hours`)}>
-                    {hr}h
-                  </Button>
-                ))}
-              </div>
-              <Button variant="secondary" className="w-full">Custom Schedule</Button>
-            </CardContent>
-          </Card>
         </div>
       </div>
-    </>
+
+      {/* SECTION: Kontrol Manual */}
+      <div className={`mt-4 transition-opacity ${activeMode !== "manual" ? "opacity-50 grayscale pointer-events-none" : "opacity-100"}`}>
+        <h3 className="text-md font-medium text-white mb-4">Kontrol Manual</h3>
+        
+        {/* Status Bar */}
+        <div className="flex items-center gap-2 p-4 bg-[#131722] border border-slate-800 rounded-lg mb-4">
+          <span className="text-sm text-slate-300">Status Saat Ini:</span>
+          {isMoving ? (
+            <span className="text-sm font-semibold flex items-center text-blue-400 gap-2">
+              <Loader2 className="w-4 h-4 animate-spin" /> Menggerakkan Jemuran...
+            </span>
+          ) : (
+            <span className={`text-sm font-semibold flex items-center gap-1 ${
+              lastAction === "MASUK" ? "text-red-500" : "text-green-500"
+            }`}>
+              <Check className="w-4 h-4" /> 
+              {lastAction === "MASUK" ? "Tertutup (Terlindung)" : "Terbuka (Menjemur)"}
+            </span>
+          )}
+        </div>
+
+        {/* Action Buttons */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          
+          {/* Tombol Buka (KELUAR) */}
+          <button 
+            disabled={isMoving || lastAction === "KELUAR"}
+            onClick={() => handleActionClick("KELUAR")}
+            className={`flex flex-col items-center justify-center p-5 rounded-lg border transition-all ${
+              lastAction === "KELUAR"
+                ? "bg-[#9B7BFF] border-[#9B7BFF] text-black" 
+                : "bg-[#131722] border-slate-800 text-slate-300 hover:bg-[#1A1F2E]"
+            }`}
+          >
+            <Play className="w-5 h-5 mb-2" fill={lastAction === "KELUAR" ? "currentColor" : "none"} />
+            <span className="font-semibold text-sm">Buka Jemuran</span>
+            <span className={`text-xs mt-1 ${lastAction === "KELUAR" ? "text-black/70" : "text-slate-500"}`}>Gerak Keluar</span>
+          </button>
+
+          {/* Tombol Tutup (MASUK) */}
+          <button 
+            disabled={isMoving || lastAction === "MASUK"}
+            onClick={() => handleActionClick("MASUK")}
+            className={`flex flex-col items-center justify-center p-5 rounded-lg border transition-all ${
+              lastAction === "MASUK"
+                ? "bg-[#9B7BFF] border-[#9B7BFF] text-black" 
+                : "bg-[#131722] border-slate-800 text-slate-300 hover:bg-[#1A1F2E]"
+            }`}
+          >
+            <Square className="w-5 h-5 mb-2" fill={lastAction === "MASUK" ? "currentColor" : "none"} />
+            <span className="font-semibold text-sm">Tutup Jemuran</span>
+            <span className={`text-xs mt-1 ${lastAction === "MASUK" ? "text-black/70" : "text-slate-500"}`}>Gerak Masuk</span>
+          </button>
+
+        </div>
+      </div>
+
+    </div>
   )
 }
