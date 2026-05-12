@@ -5,9 +5,10 @@ import DashboardLayout from "../../views/dashboard/layout";
 import { useMqtt } from "@/contexts/mqtt-context";
 
 const DashboardContent = () => {
-    const { latestData, rawHistory, isOnline } = useMqtt();
+    const { latestData, rawHistory, isOnline, jemuranStatus, lastActionTime } = useMqtt();
     console.log("Latest Data:", latestData);
     console.log("Raw History:", rawHistory);
+    console.log("Jemuran Status:", jemuranStatus);
 
     const stats = [
         {
@@ -46,7 +47,7 @@ const DashboardContent = () => {
     ];
 
     return (
-        <Dashboard isOnline={isOnline} latestData={latestData} chartData={rawHistory} stats={stats} />
+        <Dashboard isOnline={isOnline} latestData={latestData} chartData={rawHistory} stats={stats} jemuranStatus={jemuranStatus} lastActionTime={lastActionTime} />
     );
 };
 

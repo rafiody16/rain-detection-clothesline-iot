@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Card,
   CardContent,
@@ -37,11 +37,46 @@ interface DashboardProps {
   latestData: any;
   chartData: any[];
   stats?: any[];
+  jemuranStatus?: string;
+  lastActionTime?: number | null;
 }
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export default function Dashboard({ isOnline, latestData, chartData, stats }: DashboardProps) {
+const getMinutesAgo = (diffMin: number | null) => {
+  if (diffMin === null || diffMin === undefined) return "-";
+
+  if (diffMin <= 0) return "Baru saja";
+  if (diffMin < 60) return `${diffMin} menit lalu`;
+
+  const diffHours = Math.floor(diffMin / 60);
+  if (diffHours < 24) return `${diffHours} jam lalu`;
+
+  const diffDays = Math.floor(diffHours / 24);
+  return `${diffDays} hari lalu`;
+};
+
+const isServoOpen = (status?: string) =>
+  status === "TERBUKA" || status === "MEMBUKA";
+
+export default function Dashboard({ isOnline, latestData, chartData, stats, jemuranStatus, lastActionTime }: DashboardProps) {
   const [servoMode, setServoMode] = useState<"auto" | "manual" | "timer">("auto");
-  const [servoState, setServoState] = useState<"extended" | "retracted">("retracted");
+  const [servoState, setServoState] = useState<"extended" | "retracted">(
+    isServoOpen(jemuranStatus) ? "extended" : "retracted"
+  );
+  const [tick, setTick] = useState(() => Date.now());
+
+  useEffect(() => {
+    const timer = setInterval(() => setTick(Date.now()), 60000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const isExtended = isServoOpen(jemuranStatus);
+  const lastActionMinutes =
+    typeof latestData?.latest?.lastActionMinutes === "number"
+      ? latestData.latest.lastActionMinutes
+      : typeof latestData?.lastActionMinutes === "number"
+      ? latestData.lastActionMinutes
+      : typeof lastActionTime === "number"
+      ? Math.max(0, Math.floor((tick - lastActionTime) / 60000))
+      : null;
 
   return (
     <>
@@ -107,43 +142,69 @@ export default function Dashboard({ isOnline, latestData, chartData, stats }: Da
 
               {/* Kolom Kanan: Servo Status & Control Summary */}
               <div className="lg:col-span-1">
-                <Card className="rounded-2xl shadow-sm h-full">
-                  <CardHeader>
-                    <CardTitle>Servo Status</CardTitle>
-                    <CardDescription>Clothesline position</CardDescription>
-                  </CardHeader>
-                  <CardContent className="flex flex-col items-center justify-between pb-8">
-                    <div className="relative flex items-center justify-center mt-4">
-                      {/* Background Circle Decorative */}
-                      <div className={`absolute w-48 h-48 rounded-full opacity-10 blur-2xl ${servoState === "extended" ? "bg-amber-500" : "bg-zinc-500"}`} />
+              <Card className="rounded-2xl shadow-sm h-full">
+                <CardHeader>
+                  <CardTitle>Clothesline Status</CardTitle>
+                  <CardDescription>Servo position</CardDescription>
+                </CardHeader>
 
-                      <div className={`w-40 h-40 rounded-full flex flex-col items-center justify-center border-8 z-10 transition-all duration-700 ${servoState === "extended"
-                        ? "border-amber-400 shadow-[0_0_20px_rgba(251,191,36,0.2)]"
-                        : "border-zinc-200 dark:border-zinc-800 "
-                        }`}>
-                        <Sun className={`w-12 h-12 ${servoState === "extended" ? "text-amber-500" : "text-zinc-400"} mb-1`} />
-                        <span className="font-black text-xl tracking-tight">
-                          {servoState === "extended" ? "EXTENDED" : "RETRACTED"}
-                        </span>
-                        <span className="text-[10px] uppercase font-bold text-muted-foreground">
-                          {servoState === "extended" ? "Drying Mode" : "Safe Mode"}
-                        </span>
-                      </div>
+                <CardContent className="flex flex-col items-center justify-between pb-8">
+                  <div className="relative flex items-center justify-center mt-4">
+
+                    {/* Background Circle Decorative */}
+                    <div
+                      className={`absolute w-48 h-48 rounded-full opacity-10 blur-2xl ${
+                        isExtended ? "bg-amber-500" : "bg-zinc-500"
+                      }`}
+                    />
+
+                    <div
+                      className={`w-40 h-40 rounded-full flex flex-col items-center justify-center border-8 z-10 transition-all duration-700 ${
+                        isExtended
+                          ? "border-amber-400 shadow-[0_0_20px_rgba(251,191,36,0.2)]"
+                          : "border-zinc-200 dark:border-zinc-800 "
+                      }`}
+                    >
+                      <Sun
+                        className={`w-12 h-12 ${
+                          isExtended ? "text-amber-500" : "text-zinc-400"
+                        } mb-1`}
+                      />
+
+                      <span className="font-black text-xl tracking-tight">
+                        {jemuranStatus ?? "UNKNOWN"}
+                      </span>
+
+                      <span className="text-[10px] uppercase font-bold text-muted-foreground">
+                        {isExtended ? "Menjemur" : "Aman"}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4 w-full mt-12 pt-6 border-t border-zinc-100 dark:border-zinc-800">
+                    <div className="text-center">
+                      <p className="text-[10px] font-bold text-zinc-400 uppercase">
+                        System Mode
+                      </p>
+
+                      <p className="font-bold capitalize text-sm">
+                        {servoMode}
+                      </p>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4 w-full mt-12 pt-6 border-t border-zinc-100 dark:border-zinc-800">
-                      <div className="text-center">
-                        <p className="text-[10px] font-bold text-zinc-400 uppercase">System Mode</p>
-                        <p className="font-bold capitalize text-sm">{servoMode}</p>
-                      </div>
-                      <div className="text-center border-l border-zinc-100 dark:border-zinc-800">
-                        <p className="text-[10px] font-bold text-zinc-400 uppercase">Last Action</p>
-                        <p className="font-bold text-sm">10m ago</p>
-                      </div>
+                    <div className="text-center border-l border-zinc-100 dark:border-zinc-800">
+                      <p className="text-[10px] font-bold text-zinc-400 uppercase">
+                        Aksi Terakhir
+                      </p>
+
+                      <p className="font-bold text-sm">
+                        {getMinutesAgo(lastActionMinutes)}
+                      </p>
                     </div>
-                  </CardContent>
-                </Card>
-              </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
 
             </div>
           </TabsContent>
@@ -154,15 +215,14 @@ export default function Dashboard({ isOnline, latestData, chartData, stats }: Da
           >
             <Card className="rounded-2xl shadow-sm">
               <CardHeader>
-                <CardTitle>Servo Motor Control</CardTitle>
+                <CardTitle>Pengaturan Jemuran</CardTitle>
                 <CardDescription>
-                  Manage how the clothesline operates based on conditions or
-                  schedule.
+                  Kelola cara jemuran bekerja berdasarkan kondisi cuaca atau jadwal.
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-8">
                 <div className="space-y-4">
-                  <h3 className="text-lg font-medium">Operation Mode</h3>
+                  <h3 className="text-lg font-medium">Pilih Mode Operasi</h3>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div
                       className={`cursor-pointer rounded-xl border-2 p-4 flex flex-col items-center gap-3 transition-all ${servoMode === "auto" ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20" : "border-zinc-200 dark:border-zinc-800 hover:border-blue-300"}`}
@@ -172,9 +232,9 @@ export default function Dashboard({ isOnline, latestData, chartData, stats }: Da
                         className={`w-8 h-8 ${servoMode === "auto" ? "text-blue-500" : "text-zinc-400"}`}
                       />
                       <div className="text-center">
-                        <div className="font-semibold">Automatic</div>
+                        <div className="font-semibold">Otomatis</div>
                         <div className="text-xs text-muted-foreground mt-1">
-                          Sensor driven
+                          Berbasis sensor
                         </div>
                       </div>
                     </div>
@@ -188,7 +248,7 @@ export default function Dashboard({ isOnline, latestData, chartData, stats }: Da
                       <div className="text-center">
                         <div className="font-semibold">Manual</div>
                         <div className="text-xs text-muted-foreground mt-1">
-                          User controlled
+                          Kontrol manual
                         </div>
                       </div>
                     </div>
@@ -200,9 +260,9 @@ export default function Dashboard({ isOnline, latestData, chartData, stats }: Da
                         className={`w-8 h-8 ${servoMode === "timer" ? "text-purple-500" : "text-zinc-400"}`}
                       />
                       <div className="text-center">
-                        <div className="font-semibold">Timer</div>
+                        <div className="font-semibold">Jadwal</div>
                         <div className="text-xs text-muted-foreground mt-1">
-                          Schedule based
+                          Berbasis waktu
                         </div>
                       </div>
                     </div>
@@ -211,27 +271,39 @@ export default function Dashboard({ isOnline, latestData, chartData, stats }: Da
 
                 {servoMode === "manual" && (
                   <div className="space-y-4 animate-in slide-in-from-top-4">
-                    <h3 className="text-lg font-medium">Manual Override</h3>
+                    <h3 className="text-lg font-medium">Kontrol Manual</h3>
+                    <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                      <p className="text-sm text-zinc-700 dark:text-zinc-300 font-medium">
+                        Status Saat Ini: 
+                        <span className={`ml-2 font-bold ${isExtended ? "text-green-600" : "text-orange-600"}`}>
+                          {isExtended ? "✓ Terbuka (Menjemur)" : "✓ Tertutup (Terlindung)"}
+                        </span>
+                      </p>
+                    </div>
                     <div className="flex gap-4">
                       <Button
                         size="lg"
                         variant={
                           servoState === "extended" ? "default" : "outline"
                         }
-                        className="flex-1 h-14"
+                        className="flex-1 h-16 flex-col items-center gap-1"
                         onClick={() => setServoState("extended")}
                       >
-                        <Play className="w-5 h-5 mr-2" /> Extend (Dry)
+                        <Play className="w-5 h-5" />
+                        <span>Buka Jemuran</span>
+                        <span className="text-xs font-normal">Gerak Keluar</span>
                       </Button>
                       <Button
                         size="lg"
                         variant={
                           servoState === "retracted" ? "default" : "outline"
                         }
-                        className="flex-1 h-14"
+                        className="flex-1 h-16 flex-col items-center gap-1"
                         onClick={() => setServoState("retracted")}
                       >
-                        <Square className="w-5 h-5 mr-2" /> Retract (Protect)
+                        <Square className="w-5 h-5" />
+                        <span>Tutup Jemuran</span>
+                        <span className="text-xs font-normal">Gerak Masuk</span>
                       </Button>
                     </div>
                   </div>
@@ -239,10 +311,10 @@ export default function Dashboard({ isOnline, latestData, chartData, stats }: Da
 
                 {servoMode === "timer" && (
                   <div className="space-y-4 animate-in slide-in-from-top-4 bg-zinc-50 dark:bg-zinc-900/50 p-6 rounded-xl border border-zinc-200 dark:border-zinc-800">
-                    <h3 className="text-lg font-medium">Schedule Settings</h3>
+                    <h3 className="text-lg font-medium">Pengaturan Jadwal</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-2">
-                        <Label>Extend Time (Out)</Label>
+                        <Label>Waktu Buka Jemuran</Label>
                         <Input
                           type="time"
                           defaultValue="07:00"
@@ -250,7 +322,7 @@ export default function Dashboard({ isOnline, latestData, chartData, stats }: Da
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label>Retract Time (In)</Label>
+                        <Label>Waktu Tutup Jemuran</Label>
                         <Input
                           type="time"
                           defaultValue="18:00"
@@ -258,7 +330,7 @@ export default function Dashboard({ isOnline, latestData, chartData, stats }: Da
                         />
                       </div>
                     </div>
-                    <Button className="w-full">Save Schedule</Button>
+                    <Button className="w-full">Simpan Jadwal</Button>
                   </div>
                 )}
               </CardContent>

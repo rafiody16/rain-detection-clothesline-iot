@@ -7,6 +7,8 @@ export function useMqttStatus() {
   const [isOnline, setIsOnline] = useState<boolean>(false);
   const [latestData, setLatestData] = useState<any>(null);
   const [rawHistory, setRawHistory] = useState<any[]>([]);
+  const [jemuranStatus, setJemuranStatus] =useState("UNKNOWN");
+  const [lastActionTime, setLastActionTime] = useState<number | null>(null);
 
   const normalize = (item: any) => ({
     timestampValue: Date.now(),
@@ -23,6 +25,27 @@ export function useMqttStatus() {
       0,
 
   });
+
+  // Mapping status MQTT → UI
+  const mapStatus = (message: string) => {
+    if (message.includes("PROSES MASUK")) {
+      return "MENUTUP";
+    }
+
+    if (message.includes("MASUK")) {
+      return "TERTUTUP";
+    }
+
+    if (message.includes("PROSES KELUAR")) {
+      return "MEMBUKA";
+    }
+
+    if (message.includes("KELUAR")) {
+      return "TERBUKA";
+    }
+
+    return "UNKNOWN";
+  };
 
   useEffect(() => {
     let lastDataTimestamp = Date.now();
@@ -41,11 +64,21 @@ export function useMqttStatus() {
 
       // Logika Topik Status
       if (topic === "jemuran/status") {
+
         if (msgStr.includes("Online")) {
           setIsOnline(true);
           lastDataTimestamp = Date.now();
+
         } else if (msgStr.includes("Offline")) {
           setIsOnline(false);
+        }
+
+        // update status UI
+        const status = mapStatus(msgStr);
+
+        if (status !== "UNKNOWN") {
+          setJemuranStatus(status);
+          setLastActionTime(Date.now());
         }
       }
 
@@ -74,5 +107,5 @@ export function useMqttStatus() {
     };
   }, []);
 
-  return { isOnline, latestData, rawHistory };
+  return { isOnline, latestData, rawHistory, jemuranStatus, lastActionTime };
 }
