@@ -1,4 +1,4 @@
-import ViewLogin from "../views/auth/login";
+import ViewLogin from "../../views/auth/login";
 
 const Login = () => {
     return (

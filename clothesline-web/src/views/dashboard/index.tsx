@@ -30,7 +30,7 @@ import {
   Settings2,
   History,
 } from "lucide-react";
-import { SensorChart } from "../charts/sensor-chart";
+import { SensorChart } from "@/components/charts/sensor-chart";
 
 interface DashboardProps {
   isOnline: boolean;

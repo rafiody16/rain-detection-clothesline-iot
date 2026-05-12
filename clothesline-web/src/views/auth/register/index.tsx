@@ -1,6 +1,6 @@
 "use client"
 
-import { SignupForm } from "@/components/signup-form"
+import { SignupForm } from "@/components/auth/signup-form"
 import { GalleryVerticalEndIcon } from "lucide-react"
 import Image from "next/image"
 

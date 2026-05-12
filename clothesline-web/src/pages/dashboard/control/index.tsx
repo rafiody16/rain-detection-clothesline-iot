@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import ControlPage from "@/components/dashboard/control";
+import ControlPage from "@/views/dashboard/control";
 import { toast } from "sonner";
-import DashboardLayout from "@/components/dashboard/layout";
+import DashboardLayout from "@/views/dashboard/layout";
 
 export default function Control() {
   const [currentStatus, setCurrentStatus] = useState<"extended" | "retracted" | "moving">("retracted");

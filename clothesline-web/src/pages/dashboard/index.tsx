@@ -1,7 +1,7 @@
-import Dashboard from "@/components/dashboard";
+import Dashboard from "../../views/dashboard";
 import { CloudRain, Sun, ThermometerSun, Wind } from "lucide-react";
 import { formatNum } from "@/lib/format-number";
-import DashboardLayout from "@/components/dashboard/layout";
+import DashboardLayout from "../../views/dashboard/layout";
 import { useMqtt } from "@/contexts/mqtt-context";
 
 const DashboardContent = () => {

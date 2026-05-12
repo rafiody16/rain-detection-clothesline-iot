@@ -1,6 +1,6 @@
 "use client";
-import AnalyticsPage from "@/components/dashboard/analytics";
-import DashboardLayout from "@/components/dashboard/layout";
+import AnalyticsPage from "@/views/dashboard/analytics";
+import DashboardLayout from "@/views/dashboard/layout";
 import { BarChart3, Droplets, RotateCcw } from "lucide-react";
 
 

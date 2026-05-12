@@ -1,6 +1,6 @@
 "use client"
 
-import { LoginForm } from "@/components/login-form"
+import { LoginForm } from "@/components/auth/login-form"
 import { GalleryVerticalEndIcon } from "lucide-react"
 import Image from "next/image"
 
@@ -13,7 +13,7 @@ export default function ViewLogin() {
                         <div className="flex size-6 items-center justify-center rounded-md bg-primary text-primary-foreground">
                             <GalleryVerticalEndIcon className="size-4" />
                         </div>
-                        Acme Inc.
+                        4ur Inc.
                     </a>
                 </div>
                 <div className="flex flex-1 items-center justify-center">
