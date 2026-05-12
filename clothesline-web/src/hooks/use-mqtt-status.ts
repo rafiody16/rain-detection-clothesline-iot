@@ -2,7 +2,6 @@
 
 import { connectMQTT } from "@/utils/mqtt";
 import { useState, useEffect } from "react";
-// Import helper MQTT Anda di sini
 
 export function useMqttStatus() {
   const [isOnline, setIsOnline] = useState<boolean>(false);
@@ -14,7 +13,15 @@ export function useMqttStatus() {
     suhu: item.suhu ?? item.temperature ?? 0,
     lembab: item.lembab ?? item.humidity ?? 0,
     ldr: item.ldr ?? item.light ?? 0,
-    hujan: item.hujan ?? item.rain ?? false,
+
+    // Tambahkan properti intensitasAir
+    intensitasAir:
+      item.intensitasAir ??
+      item.intensitas_air ??
+      item.rainIntensity ??
+      item.rain_intensity ??
+      0,
+
   });
 
   useEffect(() => {
@@ -33,7 +40,7 @@ export function useMqttStatus() {
       const msgStr = message.toString();
 
       // Logika Topik Status
-      if (topic === 'jemuran/status') {
+      if (topic === "jemuran/status") {
         if (msgStr.includes("Online")) {
           setIsOnline(true);
           lastDataTimestamp = Date.now();
@@ -43,18 +50,18 @@ export function useMqttStatus() {
       }
 
       // Logika Topik Data
-      if (topic === 'jemuran/data') {
+      if (topic === "jemuran/data") {
         lastDataTimestamp = Date.now();
         setIsOnline(true);
+
         try {
           const parsed = JSON.parse(msgStr);
           const normalized = normalize(parsed);
-          // console.log("Received MQTT Data:", parsed);
-          // console.log("Normalized Data:", normalized);
+
           setLatestData(normalized);
-          // console.log("Updated latestData:", latestData)
-          setRawHistory((prev) => [...prev, normalized].slice(-200));
-          // console.log("Updated rawHistory length:", rawHistory)
+          setRawHistory((prev) =>
+            [...prev, normalized].slice(-200)
+          );
         } catch (e) {
           console.error("MQTT Parse Error:", e);
         }
