@@ -1,7 +1,7 @@
 import { MqttProvider } from "@/contexts/mqtt-context";
-import { SidebarInset, SidebarProvider } from "../ui/sidebar";
-import { AppSidebar } from "../app-sidebar";
-import { DashboardHeader } from "../dashboard-header";
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import { AppSidebar } from "@/components/layouts/app-sidebar";
+import { DashboardHeader } from "@/components/layouts/dashboard-header";
 export default function DashboardLayout({ children, breadcrumbs }: { children: React.ReactNode; breadcrumbs: any[] }) {
     return (
         <MqttProvider>

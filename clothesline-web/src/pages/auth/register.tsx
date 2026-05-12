@@ -1,4 +1,4 @@
-import ViewRegister from "../views/auth/register";
+import ViewRegister from "../../views/auth/register";
 
 const Register = () => {
     return (

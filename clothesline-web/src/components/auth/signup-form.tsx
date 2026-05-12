@@ -8,7 +8,7 @@ import {
   FieldSeparator,
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
-import { ModeToggle } from "./mode-toggle"
+import { ModeToggle } from "../provider/mode-toggle"
 import { useState } from "react"
 import { useRouter } from "next/router"
 import { signIn } from "next-auth/react"

@@ -1,7 +1,7 @@
 "use client"
 import { useEffect, useState } from "react";
-import HistoryPage from "@/components/dashboard/history";
-import DashboardLayout from "@/components/dashboard/layout";
+import HistoryPage from "@/views/dashboard/history";
+import DashboardLayout from "@/views/dashboard/layout";
 
 const History = () => {
     const [logs, setLogs] = useState<any>([]);

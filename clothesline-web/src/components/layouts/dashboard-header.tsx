@@ -11,11 +11,11 @@ import {
     BreadcrumbPage,
     BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
-import { ThemeSelector } from "./theme-selector";
-import { ModeToggle } from "./mode-toggle";
+import { ThemeSelector } from "../provider/theme-selector";
+import { ModeToggle } from "../provider/mode-toggle";
 import { useMqtt } from "@/contexts/mqtt-context";
-import { SwitchBadge } from "./ui/switch-badge";
-import { Clock } from "./ui/clock";
+import { SwitchBadge } from "../ui/switch-badge";
+import { Clock } from "../ui/clock";
 
 interface BreadcrumbStep {
     label: string;

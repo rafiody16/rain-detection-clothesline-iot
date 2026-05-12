@@ -1,5 +1,5 @@
-import DashboardLayout from "@/components/dashboard/layout";
-import SettingsPage from "@/components/dashboard/settings";
+import DashboardLayout from "@/views/dashboard/layout";
+import SettingsPage from "@/pages/dashboard/settings";
 
 const breadcrumbs = [
     { label: "Dashboard", href: "/dashboard" },

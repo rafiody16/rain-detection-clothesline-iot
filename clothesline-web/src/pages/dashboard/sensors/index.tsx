@@ -1,5 +1,5 @@
-import DashboardLayout from "@/components/dashboard/layout";
-import SensorsPage from "@/components/dashboard/sensors";
+import DashboardLayout from "@/views/dashboard/layout";
+import SensorsPage from "@/views/dashboard/sensors";
 
 const breadcrumbs = [
     { label: "Dashboard", href: "/dashboard" },

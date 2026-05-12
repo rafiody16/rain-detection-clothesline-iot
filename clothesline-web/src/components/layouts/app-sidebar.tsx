@@ -12,10 +12,10 @@ import {
   LayoutDashboard
 } from "lucide-react"
 
-import { NavMain } from "@/components/nav-main"
-import { NavProjects } from "@/components/nav-projects"
-import { NavUser } from "@/components/nav-user"
-import { TeamSwitcher } from "@/components/team-switcher"
+import { NavMain } from "@/components/layouts/nav-main"
+import { NavProjects } from "@/components/layouts/nav-projects"
+import { NavUser } from "@/components/layouts/nav-user"
+import { TeamSwitcher } from "@/components/provider/team-switcher"
 import {
   Sidebar,
   SidebarContent,

@@ -1,9 +1,9 @@
 "use client"
 
 import { useEffect, useState } from "react";
-import SystemLogsPage from "@/components/dashboard/logs/system";
+import SystemLogsPage from "../../../../views/dashboard/logs/system";
 import { connectMQTT } from "@/utils/mqtt";
-import DashboardLayout from "@/components/dashboard/layout";
+import DashboardLayout from "../../../../views/dashboard/layout";
 
 interface SystemLog {
     id: string;
