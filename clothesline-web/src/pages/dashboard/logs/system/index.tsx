@@ -13,6 +13,7 @@ interface SystemLog {
 }
 
 const SystemLogs = () => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [weatherData, setWeatherData] = useState<any>(null);
     const [logs, setLogs] = useState<SystemLog[]>([]);
 

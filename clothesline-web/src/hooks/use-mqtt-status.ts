@@ -52,7 +52,7 @@ export function useMqttStatus() {
           // console.log("Received MQTT Data:", parsed);
           // console.log("Normalized Data:", normalized);
           setLatestData(normalized);
-          console.log("Updated latestData:", latestData)
+          // console.log("Updated latestData:", latestData)
           setRawHistory((prev) => [...prev, normalized].slice(-200));
           // console.log("Updated rawHistory length:", rawHistory)
         } catch (e) {

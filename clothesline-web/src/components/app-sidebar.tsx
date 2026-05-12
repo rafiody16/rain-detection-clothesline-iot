@@ -6,7 +6,6 @@ import {
   Activity,
   Settings2,
   CloudRain,
-  Sun,
   Settings,
   PlayCircle,
   BarChart3,

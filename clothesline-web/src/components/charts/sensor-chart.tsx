@@ -1,5 +1,4 @@
 "use client";
-import { useState, useMemo } from "react";
 import {
     Card,
     CardContent,
@@ -16,8 +15,7 @@ import {
     CartesianGrid,
     Tooltip,
 } from "recharts";
-import { Button } from "../ui/button";
-import { now } from "next-auth/client/_utils";
+import { SwitchBadge } from "../ui/switch-badge";
 
 interface SensorChartProps {
     data: any[];
@@ -35,27 +33,19 @@ interface SensorChartProps {
 
 export function SensorChart({ data, config, title, desc, isOnline }: SensorChartProps) {
     return (
-        <Card className="rounded-2xl border-none shadow-sm overflow-hidden">
+        <Card className="rounded-2xl shadow-sm overflow-hidden radius-sm">
             <CardHeader className="pb-2">
                 <div className="flex items-center justify-between">
                     <div>
                         <CardTitle className="text-lg font-bold">{title}</CardTitle>
                         <CardDescription className="text-xs">{desc}</CardDescription>
                     </div>
-                    <div className="flex items-center gap-2 px-3 py-1 bg-zinc-100 dark:bg-zinc-900 rounded-full transition-colors duration-500">
-                        <span className="relative flex h-2 w-2">
-                            {isOnline && (
-                                <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${isOnline ? "bg-blue-400" : "bg-zinc-400"
-                                    }`}></span>
-                            )}
-                            <span className={`relative inline-flex rounded-full h-2 w-2 transition-colors duration-500 ${isOnline ? "bg-blue-500" : "bg-zinc-500"
-                                }`}></span>
-                        </span>
-
-                        <span className="text-[10px] font-bold text-zinc-600 dark:text-zinc-400 uppercase tracking-wider">
-                            {isOnline ? "Live" : "Off"}
-                        </span>
-                    </div>
+                    {isOnline ? (
+                        <SwitchBadge status="live" />
+                    ) : (
+                        <SwitchBadge status="off" />
+                    )
+                    }
                 </div>
             </CardHeader>
             <CardContent className="pl-0 pr-0 pb-0">

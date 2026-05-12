@@ -1,4 +1,3 @@
-import Dashboard from "@/components/dashboard";
 import DashboardLayout from "@/components/dashboard/layout";
 import SettingsPage from "@/components/dashboard/settings";
 

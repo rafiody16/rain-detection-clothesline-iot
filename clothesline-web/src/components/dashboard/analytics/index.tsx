@@ -1,7 +1,7 @@
 "use client"
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { BarChart3, Clock, Droplets, RotateCcw } from "lucide-react"
+import { BarChart3 } from "lucide-react"
 
 interface AnalyticsPageStats {
   title: string;

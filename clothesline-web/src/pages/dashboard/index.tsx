@@ -1,15 +1,11 @@
 import Dashboard from "@/components/dashboard";
-import { connectMQTT } from "@/utils/mqtt";
-import { set } from "date-fns";
-import { useEffect, useState, useMemo } from "react";
-import { subHours, subDays, subWeeks, subMonths, subYears, isAfter } from "date-fns";
 import { CloudRain, Sun, ThermometerSun, Wind } from "lucide-react";
 import { formatNum } from "@/lib/format-number";
 import DashboardLayout from "@/components/dashboard/layout";
 import { useMqtt } from "@/contexts/mqtt-context";
 
 const DashboardContent = () => {
-    const {latestData, rawHistory, isOnline} = useMqtt();
+    const { latestData, rawHistory, isOnline } = useMqtt();
     console.log("Latest Data:", latestData);
     console.log("Raw History:", rawHistory);
 
@@ -54,7 +50,7 @@ const Homepage = () => {
         { label: "Dashboard", href: "/dashboard" },
         { label: "Smart Clothesline" },
     ];
-    
+
     return (
         <DashboardLayout breadcrumbs={breadcrumbs}>
             <DashboardContent />

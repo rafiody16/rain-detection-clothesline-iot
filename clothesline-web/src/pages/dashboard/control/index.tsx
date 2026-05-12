@@ -8,20 +8,19 @@ import DashboardLayout from "@/components/dashboard/layout";
 export default function Control() {
   const [currentStatus, setCurrentStatus] = useState<"extended" | "retracted" | "moving">("retracted");
 
-  const fetchCurrentStatus = async () => {
-    try {
-      const res = await fetch("/api/iot");
-      const data = await res.json();
-      if (Array.isArray(data) && data.length > 0) {
-        const latest = data[0];
-        setCurrentStatus(latest.servo === 1 ? "extended" : "retracted");
-      }
-    } catch (err) {
-      console.error("Failed to fetch status");
-    }
-  };
-
   useEffect(() => {
+    const fetchCurrentStatus = async () => {
+      try {
+        const res = await fetch("/api/iot");
+        const data = await res.json();
+        if (Array.isArray(data) && data.length > 0) {
+          const latest = data[0];
+          setCurrentStatus(latest.servo === 1 ? "extended" : "retracted");
+        }
+      } catch {
+        console.error("Failed to fetch status");
+      }
+    };
     fetchCurrentStatus();
   }, []);
 

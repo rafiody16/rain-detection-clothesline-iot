@@ -1,14 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
-import { BadgeCheck, CalendarIcon, CloudRainIcon, History, Sun } from "lucide-react";
+import { CalendarIcon, CloudRainIcon, History, Sun } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
@@ -33,9 +30,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ThemeSelector } from "@/components/theme-selector";
-import { DashboardHeader } from "@/components/dashboard-header";
-import { useDateTime } from "@/hooks/use-date-time";
 
 type HistoryPageProps = {
   logs: any[];
@@ -45,9 +39,8 @@ type HistoryPageProps = {
 };
 
 export default function HistoryPage({ logs, isLoading, date, onDateChange }: HistoryPageProps) {
-  const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(25);
-  const [inputPage, setInputPage] = useState(currentPage.toString());
+  const [inputPage, setInputPage] = useState("1");
 
   // console.log("Initial logs prop:", logs);
 
@@ -69,32 +62,31 @@ export default function HistoryPage({ logs, isLoading, date, onDateChange }: His
   // console.log("Processed Logs:", processedLogs);
 
   const totalPages = Math.ceil(processedLogs.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
 
+  const currentPage = useMemo(() => {
+    const n = parseInt(inputPage, 10);
+    if (!Number.isFinite(n) || n < 1) return 1;
+    if (n > totalPages && totalPages > 0) return totalPages;
+    return n;
+  }, [inputPage, totalPages]);
+
+  const startIndex = (currentPage - 1) * itemsPerPage;
   const currentLogs = processedLogs.slice(startIndex, startIndex + itemsPerPage);
 
-  const goToNextPage = (e: React.MouseEvent) => {
-    e.preventDefault();
-    if (currentPage < totalPages) setCurrentPage(prev => prev + 1);
+
+
+  const handleDateChange = (newDate: Date | undefined) => {
+    onDateChange?.(newDate);
+    setInputPage("1");
   };
 
-  const goToPrevPage = (e: React.MouseEvent) => {
-    e.preventDefault();
-    if (currentPage > 1) setCurrentPage(prev => prev - 1);
-  };
-
-  useEffect(() => {
-    setInputPage(currentPage.toString());
-  }, [currentPage]);
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-  if (e.key === "Enter") {
-    const val = parseInt(inputPage);
-    if (!isNaN(val) && val >= 1 && val <= totalPages) {
-      setCurrentPage(val);
-    } else {
-      setInputPage(currentPage.toString());
-    }
+  const commitPageChange = (val: string) => {
+  const n = parseInt(val, 10);
+  // Validasi: harus angka, >= 1, dan <= total halaman
+  if (!Number.isFinite(n) || n < 1 || n > totalPages) {
+    setInputPage(currentPage.toString()); // Balikin ke angka bener kalau ngaco
+  } else {
+    setInputPage(n.toString()); // Update ke halaman baru
   }
 };
   return (
@@ -137,8 +129,7 @@ export default function HistoryPage({ logs, isLoading, date, onDateChange }: His
                     mode="single"
                     selected={date}
                     onSelect={(newDate) => {
-                      onDateChange?.(newDate);
-                      setCurrentPage(1);
+                      handleDateChange(newDate);
                     }}
                     disabled={(date) => date > new Date() || date < new Date("1900-01-01")}
                   />
@@ -259,7 +250,7 @@ export default function HistoryPage({ logs, isLoading, date, onDateChange }: His
                     value={itemsPerPage.toString()}
                     onValueChange={(v) => {
                       setItemsPerPage(Number(v)); 
-                      setCurrentPage(1); 
+                      setInputPage("1"); 
                     }}
                   >
                     <SelectTrigger className="w-20" id="select-rows-per-page">
@@ -280,10 +271,14 @@ export default function HistoryPage({ logs, isLoading, date, onDateChange }: His
                   <div className="flex items-center gap-2">
       <span className="text-sm text-muted-foreground whitespace-nowrap">Go to page</span>
       <PaginationInput
-        value={inputPage}
-        onChange={(e) => setInputPage(e.currentTarget.value)}
-        onKeyDown={handleKeyDown}
-        max={totalPages}
+        key={currentPage}
+        defaultValue={currentPage}
+        onKeyDown={(e) => {
+      if (e.key === "Enter") {
+        commitPageChange(e.currentTarget.value);
+      }
+    }}
+        onBlur={(e) => commitPageChange(e.currentTarget.value)}
         className="h-8 w-14" 
       />
       <span className="text-sm text-muted-foreground whitespace-nowrap">
@@ -297,7 +292,7 @@ export default function HistoryPage({ logs, isLoading, date, onDateChange }: His
                           href="#"
                           onClick={(e) => {
                             e.preventDefault();
-                            if (currentPage > 1) setCurrentPage(currentPage - 1);
+                            if (currentPage > 1) setInputPage((currentPage - 1).toString());
                           }}
                           className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
                         />
@@ -307,7 +302,7 @@ export default function HistoryPage({ logs, isLoading, date, onDateChange }: His
                           href="#"
                           onClick={(e) => {
                             e.preventDefault();
-                            if (currentPage < totalPages) setCurrentPage(currentPage + 1);
+                            if (currentPage < totalPages) setInputPage((currentPage + 1).toString());
                           }}
                           className={currentPage >= totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
                         />
