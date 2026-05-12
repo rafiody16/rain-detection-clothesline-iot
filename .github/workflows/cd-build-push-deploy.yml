@@ -53,8 +53,8 @@ jobs:
 
       - name: 7. Deploy to compute engine
         run: |
-          gcloud compute instances update-container ${{ env.GCE_INSTANCE }} \ 
-            --container-image docker.io/${{ env.IMAGE_NAME }}:${{ github.sha }} \ 
+          gcloud compute instances update-container ${{ env.GCE_INSTANCE }} \
+            --container-image docker.io/${{ env.IMAGE_NAME }}:${{ github.sha }} \
             --zone ${{ env.GCE_ZONE }} \
-            --project ${{ secrets.GCP_PROJECT_ID }} \ 
-            --container-mount-host-path=/home/${{ secrets.VM_USERNAME }}/.env,mount-path=/app/.env,mode=ro
+            --project ${{ secrets.GCP_PROJECT_ID }} \
+            --container-mount-host-path=host-path=/home/${{ secrets.VM_USERNAME }}/.env,mount-path=/app/.env,mode=ro
