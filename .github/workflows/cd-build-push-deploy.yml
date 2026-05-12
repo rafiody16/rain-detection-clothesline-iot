@@ -53,8 +53,16 @@ jobs:
 
       - name: 7. Deploy to compute engine
         run: |
-          gcloud compute instances update-container ${{ env.GCE_INSTANCE }} \
-            --container-image docker.io/${{ env.IMAGE_NAME }}:${{ github.sha }} \
+          gcloud compute ssh ${{ secrets.VM_USERNAME }}@${{ env.GCE_INSTANCE }} \
             --zone ${{ env.GCE_ZONE }} \
             --project ${{ secrets.GCP_PROJECT_ID }} \
-            --container-mount-host-path=host-path=/home/${{ secrets.VM_USERNAME }}/.env,mount-path=/app/.env,mode=ro
+            --quiet \
+            command " \
+              docker pull docker.io/${{ env.IMAGE_NAME }}:${{ github.sha }} && \
+              docker stop clothesline-web || true && \
+              docker rm clothesline-web || true && \
+              docker run -d \
+                --name clothesline-web \
+                -p 80:3000 \
+                -v /home/${{ secrets.VM_USERNAME }}/.env:/app/.env:ro \
+                docker.io/${{ env.IMAGE_NAME }}:${{ github.sha }}"
