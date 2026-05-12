@@ -6,12 +6,16 @@ interface MqttContextType {
   isOnline: boolean;
   latestData: any;
   rawHistory: any[];
+  jemuranStatus: string;
+  lastActionTime: number | null;
 }
 
 const MqttContext = createContext<MqttContextType>({ 
   isOnline: false, 
   latestData: null,
-  rawHistory: [] 
+  rawHistory: [],
+  jemuranStatus: "",
+  lastActionTime: null,
 });
 
 export function MqttProvider({ children }: { children: React.ReactNode }) {
