@@ -53,7 +53,7 @@ jobs:
 
       - name: 7. Deploy to compute engine
         run: |
-          gcloud compute instance update-container ${{ env.GCE_INSTANCE }} \ 
+          gcloud compute instances update-container ${{ env.GCE_INSTANCE }} \ 
             --container-image docker.io/${{ env.IMAGE_NAME }}:${{ github.sha }} \ 
             --zone ${{ env.GCE_ZONE }} \
             --project ${{ secrets.GCP_PROJECT_ID }} \ 
