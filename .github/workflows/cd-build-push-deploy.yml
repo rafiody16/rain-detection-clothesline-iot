@@ -39,6 +39,8 @@ jobs:
           push: true
           cache-from: type=gha
           cache-to: type=gha, mode=max
+          build-args: |
+            NEXT_PUBLIC_MQTT_API_URL=${{ secrets.NEXT_PUBLIC_MQTT_API_URL }}
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/clothesline-web:latest
             ${{ secrets.DOCKERHUB_USERNAME }}/clothesline-web:${{ github.sha }}
