@@ -77,7 +77,7 @@ export function useMqttStatus() {
 
           setLatestData(normalized);
           setRawHistory((prev) =>
-            [...prev, normalized].slice(-200)
+            [...prev, normalized].slice(-150)
           );
           setLastActionData((prev: IoTData | null) => {
             if(!prev) return normalized;

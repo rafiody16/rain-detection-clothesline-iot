@@ -25,9 +25,9 @@ Servo servoJemuran;
 #define RAIN_ANALOG 35
 
 const float BATAS_LEMBAB = 80.0;
-const float BATAS_SUHU = 16.0;
-const int BATAS_GELAP = 2000;
-const int BATAS_HUJAN = 4000;
+const float BATAS_SUHU = 25.0;
+const int BATAS_GELAP = 2500;
+const int BATAS_HUJAN = 3600;
 
 // =====================
 // KONFIGURASI SERVO 360
@@ -104,6 +104,12 @@ void setLeds(bool dalam, bool proses, bool luar);
       Serial.println("Web Perintah: MODE OTOMATIS AKTIF");
       modeAuto = true;
       client.publish("jemuran/status", "DEBUG: MODE AUTO");
+    }
+    else if (pesan == "MANUAL")
+    {
+      Serial.println("Web Perintah: MODE MANUAL AKTIF");
+      modeAuto = false;
+      client.publish("jemuran/status", "DEBUG: MODE MANUAL");
     }
   }
 }
@@ -232,10 +238,10 @@ void loop()
   bool sedangHujan = (intensitasAir < BATAS_HUJAN);
   bool cuacaBuruk = sedangHujan || gelap || (lembab > BATAS_LEMBAB) || (suhu < BATAS_SUHU);
 
-  char msg[128];
+  char msg[200];
   snprintf(msg, sizeof(msg),
-           "{\"suhu\":%.1f,\"lembab\":%.1f,\"ldr\":%d,\"intensitasAir\":%d,\"cuacaBuruk\":%d,\"mode\":\"%s\"}",
-           suhu, lembab, nilaiLDR, intensitasAir, cuacaBuruk ? 1 : 0, modeAuto ? "AUTO" : "MANUAL");
+           "{\"suhu\":%.1f,\"lembab\":%.1f,\"ldr\":%d,\"intensitasAir\":%d,\"cuacaBuruk\":%d,\"mode\":\"%s\",\"statusDiLuar\":%d}",
+           suhu, lembab, nilaiLDR, intensitasAir, cuacaBuruk ? 1 : 0, modeAuto ? "AUTO" : "MANUAL", statusDiLuar ? 1 : 0);
   client.publish("jemuran/data", msg);
 
   if (modeAuto)
