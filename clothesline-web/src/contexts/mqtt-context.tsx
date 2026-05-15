@@ -1,21 +1,22 @@
 "use client";
 import { createContext, useContext } from "react";
 import { useMqttStatus } from "@/hooks/use-mqtt-status";
+import { CommandPayload } from "@/utils/iot-data";
 
 interface MqttContextType {
   isOnline: boolean;
   latestData: any;
   rawHistory: any[];
-  jemuranStatus: string;
-  lastActionTime: number | null;
+  lastActionData: any;
+  sendCommand: (payload: CommandPayload) => void;
 }
 
 const MqttContext = createContext<MqttContextType>({ 
   isOnline: false, 
   latestData: null,
   rawHistory: [],
-  jemuranStatus: "",
-  lastActionTime: null,
+  lastActionData: null,
+  sendCommand: () => {},
 });
 
 export function MqttProvider({ children }: { children: React.ReactNode }) {

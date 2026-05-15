@@ -30,31 +30,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         // Konversi object Firebase ke Array
         const sensor = Object.entries(data).map(([id, value]) => ({
             id,
-            ...(value as any)
-        }));
+            ...(value as object)
+        })).filter((item: any) => item.timestamp);
 
-        // Cari entri terbaru berdasarkan field `timestamp` jika tersedia
-        let latest: any = null;
-        try {
-            const withTs = sensor
-                .map((s) => ({ ...s, _ts: s.timestamp ? new Date(s.timestamp).getTime() : 0 }))
-                .sort((a, b) => b._ts - a._ts);
-            if (withTs.length > 0 && withTs[0]._ts > 0) {
-                const top = withTs[0];
-                latest = {
-                    id: top.id,
-                    servo: top.servo ?? null,
-                    mode: top.mode ?? null,
-                    timestamp: top.timestamp ?? null,
-                    lastActionAt: top.timestamp ?? null,
-                    lastActionMinutes: top._ts > 0 ? Math.floor((Date.now() - top._ts) / 60000) : null,
-                };
-            }
-        } catch (e) {
-            // ignore parsing errors, latest will remain null
-        }
-
-        res.status(200).json({ sensor, latest });
+        res.status(200).json(sensor);
     } catch {
         res.status(500).json({ error: "Server Error" });
     }

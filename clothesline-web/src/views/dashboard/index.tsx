@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import {
   Card,
   CardContent,
@@ -24,60 +23,82 @@ import {
   CloudRain,
   Sun,
   ThermometerSun,
-  Activity,
-  Play,
-  Square,
-  Settings2,
-  History,
+  Wind,
 } from "lucide-react";
-import { SensorChart } from "@/components/charts/sensor-chart";
+import { ServoControl } from "@/components/custom/servo-control";
+import { SensorChart } from "@/components/custom/sensor-chart";
+import { useMqtt } from "@/contexts/mqtt-context";
+import { formatNum } from "@/lib/format-number";
+import { StatCard } from "@/components/custom/stat-card";
+import { StatusCard } from "@/components/custom/servo-status-card";
 
-interface DashboardProps {
-  isOnline: boolean;
-  latestData: any;
-  chartData: any[];
-  stats?: any[];
-  jemuranStatus?: string;
-  lastActionTime?: number | null;
-}
-const getMinutesAgo = (diffMin: number | null) => {
-  if (diffMin === null || diffMin === undefined) return "-";
+export default function Dashboard() {
+  const { latestData, rawHistory: chartData, isOnline, lastActionData } = useMqtt();
 
-  if (diffMin <= 0) return "Baru saja";
-  if (diffMin < 60) return `${diffMin} menit lalu`;
+  const stats = [
+    {
+      title: "Temperature",
+      value: formatNum(latestData?.suhu) ? `${formatNum(latestData.suhu)}°C` : "—",
+      icon: <ThermometerSun className="h-4 w-4 text-amber-500" />,
+      color: "bg-amber-500/10",
+      desc: latestData ? "Live" : "No data"
+    },
+    {
+      title: "Humidity",
+      value: formatNum(latestData?.lembab) ? `${formatNum(latestData.lembab)}%` : "—",
+      icon: <Wind className="h-4 w-4 text-blue-500" />,
+      color: "bg-blue-500/10",
+      desc: latestData ? "Live" : "No data"
+    },
+    {
+      title: "Light Level (LDR)",
+      value: formatNum(latestData?.ldr, 0) ? `${formatNum(latestData.ldr, 0)} lux` : "—",
+      icon: <Sun className="h-4 w-4 text-yellow-500" />,
+      color: "bg-yellow-500/10",
+      desc: Number(latestData?.ldr) > 1600 ? "Dark" : "Normal"
+    },
+    {
+      id: `rain-${latestData?.intensitasAir}`,
+      title: "Rain Status",
+      value: formatNum(latestData?.intensitasAir, 0) ? `${formatNum(latestData.intensitasAir, 0)}` : "—",
+      icon: <CloudRain className="h-4 w-4 text-cyan-500" />,
+      color: "bg-cyan-500/10",
+      desc: Number(latestData?.intensitasAir ?? 0) < 3000
+        ? "Rain detected"
+        : "No rain detected",
+    },
+  ];
 
-  const diffHours = Math.floor(diffMin / 60);
-  if (diffHours < 24) return `${diffHours} jam lalu`;
+  const formatSmartTime = (timestampValue?: number) => {
+    if (!timestampValue) return "--:--";
 
-  const diffDays = Math.floor(diffHours / 24);
-  return `${diffDays} hari lalu`;
-};
+    const date = new Date(timestampValue);
+    const now = new Date();
 
-const isServoOpen = (status?: string) =>
-  status === "TERBUKA" || status === "MEMBUKA";
+    // Cek apakah hari, bulan, dan tahunnya sama dengan hari ini
+    const isToday =
+      date.getDate() === now.getDate() &&
+      date.getMonth() === now.getMonth() &&
+      date.getFullYear() === now.getFullYear();
 
-export default function Dashboard({ isOnline, latestData, chartData, stats, jemuranStatus, lastActionTime }: DashboardProps) {
-  const [servoMode, setServoMode] = useState<"auto" | "manual" | "timer">("auto");
-  const [servoState, setServoState] = useState<"extended" | "retracted">(
-    isServoOpen(jemuranStatus) ? "extended" : "retracted"
-  );
-  const [tick, setTick] = useState(() => Date.now());
+    // Ambil jam & menit (Contoh: "15:53")
+    const timeString = date.toLocaleTimeString("id-ID", {
+      hour: "2-digit",
+      minute: "2-digit",
+    }).replace(/\./g, ':'); // Mengubah format titik 15.53 jadi titik dua 15:53 agar lebih standar
 
-  useEffect(() => {
-    const timer = setInterval(() => setTick(Date.now()), 60000);
-    return () => clearInterval(timer);
-  }, []);
-
-  const isExtended = isServoOpen(jemuranStatus);
-  const lastActionMinutes =
-    typeof latestData?.latest?.lastActionMinutes === "number"
-      ? latestData.latest.lastActionMinutes
-      : typeof latestData?.lastActionMinutes === "number"
-      ? latestData.lastActionMinutes
-      : typeof lastActionTime === "number"
-      ? Math.max(0, Math.floor((tick - lastActionTime) / 60000))
-      : null;
-
+    if (isToday) {
+      // Jika hari ini, tampilkan "Hari ini, 15:53" atau cukup jamnya saja
+      return `Hari ini, ${timeString}`;
+    } else {
+      // Jika bukan hari ini, tampilkan tanggal ringkas "13 Mei, 15:53"
+      const dateString = date.toLocaleDateString("id-ID", {
+        day: "numeric",
+        month: "short",
+      });
+      return `${dateString}, ${timeString}`;
+    }
+  };
   return (
     <>
       <div className="flex flex-1 flex-col gap-4 p-4 md:p-8 pt-4">
@@ -92,21 +113,14 @@ export default function Dashboard({ isOnline, latestData, chartData, stats, jemu
             {/* 1. SENSOR STATS - Tetap 4 kolom di layar besar */}
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
               {stats?.map((stat, i) => (
-                <Card key={i} className="rounded-2xl shadow-sm overflow-hidden">
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium text-zinc-500">{stat.title}</CardTitle>
-                    <div className={`p-2 rounded-lg ${stat.color.replace('bg-', 'text-').replace('/10', '')} bg-zinc-100 dark:bg-zinc-900`}>
-                      {stat.icon}
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-3xl font-bold">{stat.value}</div>
-                    <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
-                      <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-                      {stat.desc}
-                    </p>
-                  </CardContent>
-                </Card>
+                <StatCard
+                  key={i}
+                  title={stat.title}
+                  value={stat.value}
+                  desc={stat.desc}
+                  icon={stat.icon}
+                  color={stat.color}
+                />
               ))}
             </div>
 
@@ -142,69 +156,11 @@ export default function Dashboard({ isOnline, latestData, chartData, stats, jemu
 
               {/* Kolom Kanan: Servo Status & Control Summary */}
               <div className="lg:col-span-1">
-              <Card className="rounded-2xl shadow-sm h-full">
-                <CardHeader>
-                  <CardTitle>Clothesline Status</CardTitle>
-                  <CardDescription>Servo position</CardDescription>
-                </CardHeader>
-
-                <CardContent className="flex flex-col items-center justify-between pb-8">
-                  <div className="relative flex items-center justify-center mt-4">
-
-                    {/* Background Circle Decorative */}
-                    <div
-                      className={`absolute w-48 h-48 rounded-full opacity-10 blur-2xl ${
-                        isExtended ? "bg-amber-500" : "bg-zinc-500"
-                      }`}
-                    />
-
-                    <div
-                      className={`w-40 h-40 rounded-full flex flex-col items-center justify-center border-8 z-10 transition-all duration-700 ${
-                        isExtended
-                          ? "border-amber-400 shadow-[0_0_20px_rgba(251,191,36,0.2)]"
-                          : "border-zinc-200 dark:border-zinc-800 "
-                      }`}
-                    >
-                      <Sun
-                        className={`w-12 h-12 ${
-                          isExtended ? "text-amber-500" : "text-zinc-400"
-                        } mb-1`}
-                      />
-
-                      <span className="font-black text-xl tracking-tight">
-                        {jemuranStatus ?? "UNKNOWN"}
-                      </span>
-
-                      <span className="text-[10px] uppercase font-bold text-muted-foreground">
-                        {isExtended ? "Menjemur" : "Aman"}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4 w-full mt-12 pt-6 border-t border-zinc-100 dark:border-zinc-800">
-                    <div className="text-center">
-                      <p className="text-[10px] font-bold text-zinc-400 uppercase">
-                        System Mode
-                      </p>
-
-                      <p className="font-bold capitalize text-sm">
-                        {servoMode}
-                      </p>
-                    </div>
-
-                    <div className="text-center border-l border-zinc-100 dark:border-zinc-800">
-                      <p className="text-[10px] font-bold text-zinc-400 uppercase">
-                        Aksi Terakhir
-                      </p>
-
-                      <p className="font-bold text-sm">
-                        {getMinutesAgo(lastActionMinutes)}
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
+                <StatusCard
+                  lastActionData={lastActionData}
+                  formatSmartTime={formatSmartTime}
+                />
+              </div>
 
             </div>
           </TabsContent>
@@ -213,128 +169,7 @@ export default function Dashboard({ isOnline, latestData, chartData, stats, jemu
             value="control"
             className="space-y-6 animate-in fade-in-50"
           >
-            <Card className="rounded-2xl shadow-sm">
-              <CardHeader>
-                <CardTitle>Pengaturan Jemuran</CardTitle>
-                <CardDescription>
-                  Kelola cara jemuran bekerja berdasarkan kondisi cuaca atau jadwal.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-8">
-                <div className="space-y-4">
-                  <h3 className="text-lg font-medium">Pilih Mode Operasi</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div
-                      className={`cursor-pointer rounded-xl border-2 p-4 flex flex-col items-center gap-3 transition-all ${servoMode === "auto" ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20" : "border-zinc-200 dark:border-zinc-800 hover:border-blue-300"}`}
-                      onClick={() => setServoMode("auto")}
-                    >
-                      <Activity
-                        className={`w-8 h-8 ${servoMode === "auto" ? "text-blue-500" : "text-zinc-400"}`}
-                      />
-                      <div className="text-center">
-                        <div className="font-semibold">Otomatis</div>
-                        <div className="text-xs text-muted-foreground mt-1">
-                          Berbasis sensor
-                        </div>
-                      </div>
-                    </div>
-                    <div
-                      className={`cursor-pointer rounded-xl border-2 p-4 flex flex-col items-center gap-3 transition-all ${servoMode === "manual" ? "border-amber-500 bg-amber-50 dark:bg-amber-900/20" : "border-zinc-200 dark:border-zinc-800 hover:border-amber-300"}`}
-                      onClick={() => setServoMode("manual")}
-                    >
-                      <Settings2
-                        className={`w-8 h-8 ${servoMode === "manual" ? "text-amber-500" : "text-zinc-400"}`}
-                      />
-                      <div className="text-center">
-                        <div className="font-semibold">Manual</div>
-                        <div className="text-xs text-muted-foreground mt-1">
-                          Kontrol manual
-                        </div>
-                      </div>
-                    </div>
-                    <div
-                      className={`cursor-pointer rounded-xl border-2 p-4 flex flex-col items-center gap-3 transition-all ${servoMode === "timer" ? "border-purple-500 bg-purple-50 dark:bg-purple-900/20" : "border-zinc-200 dark:border-zinc-800 hover:border-purple-300"}`}
-                      onClick={() => setServoMode("timer")}
-                    >
-                      <History
-                        className={`w-8 h-8 ${servoMode === "timer" ? "text-purple-500" : "text-zinc-400"}`}
-                      />
-                      <div className="text-center">
-                        <div className="font-semibold">Jadwal</div>
-                        <div className="text-xs text-muted-foreground mt-1">
-                          Berbasis waktu
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {servoMode === "manual" && (
-                  <div className="space-y-4 animate-in slide-in-from-top-4">
-                    <h3 className="text-lg font-medium">Kontrol Manual</h3>
-                    <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-                      <p className="text-sm text-zinc-700 dark:text-zinc-300 font-medium">
-                        Status Saat Ini: 
-                        <span className={`ml-2 font-bold ${isExtended ? "text-green-600" : "text-orange-600"}`}>
-                          {isExtended ? "✓ Terbuka (Menjemur)" : "✓ Tertutup (Terlindung)"}
-                        </span>
-                      </p>
-                    </div>
-                    <div className="flex gap-4">
-                      <Button
-                        size="lg"
-                        variant={
-                          servoState === "extended" ? "default" : "outline"
-                        }
-                        className="flex-1 h-16 flex-col items-center gap-1"
-                        onClick={() => setServoState("extended")}
-                      >
-                        <Play className="w-5 h-5" />
-                        <span>Buka Jemuran</span>
-                        <span className="text-xs font-normal">Gerak Keluar</span>
-                      </Button>
-                      <Button
-                        size="lg"
-                        variant={
-                          servoState === "retracted" ? "default" : "outline"
-                        }
-                        className="flex-1 h-16 flex-col items-center gap-1"
-                        onClick={() => setServoState("retracted")}
-                      >
-                        <Square className="w-5 h-5" />
-                        <span>Tutup Jemuran</span>
-                        <span className="text-xs font-normal">Gerak Masuk</span>
-                      </Button>
-                    </div>
-                  </div>
-                )}
-
-                {servoMode === "timer" && (
-                  <div className="space-y-4 animate-in slide-in-from-top-4 bg-zinc-50 dark:bg-zinc-900/50 p-6 rounded-xl border border-zinc-200 dark:border-zinc-800">
-                    <h3 className="text-lg font-medium">Pengaturan Jadwal</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="space-y-2">
-                        <Label>Waktu Buka Jemuran</Label>
-                        <Input
-                          type="time"
-                          defaultValue="07:00"
-                          className="h-12"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Waktu Tutup Jemuran</Label>
-                        <Input
-                          type="time"
-                          defaultValue="18:00"
-                          className="h-12"
-                        />
-                      </div>
-                    </div>
-                    <Button className="w-full">Simpan Jadwal</Button>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+            <ServoControl />
           </TabsContent>
 
           <TabsContent
