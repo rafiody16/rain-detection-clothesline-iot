@@ -1,51 +1,44 @@
 "use client";
 
 import { connectMQTT } from "@/utils/mqtt";
-import { useState, useEffect } from "react";
+import { CommandPayload, IoTData, normalizeIoTData } from "@/utils/iot-data";
+import { useState, useEffect, useRef } from "react";
+import { useFirebase } from "@/contexts/firebase-context";
 
 export function useMqttStatus() {
   const [isOnline, setIsOnline] = useState<boolean>(false);
-  const [latestData, setLatestData] = useState<any>(null);
-  const [rawHistory, setRawHistory] = useState<any[]>([]);
-  const [jemuranStatus, setJemuranStatus] =useState("UNKNOWN");
-  const [lastActionTime, setLastActionTime] = useState<number | null>(null);
+  const [latestData, setLatestData] = useState<IoTData | null>(null);
+  const [rawHistory, setRawHistory] = useState<IoTData[]>([]);
+  const [lastActionData, setLastActionData] = useState<IoTData | null>(null);
 
-  const normalize = (item: any) => ({
-    timestampValue: Date.now(),
-    suhu: item.suhu ?? item.temperature ?? 0,
-    lembab: item.lembab ?? item.humidity ?? 0,
-    ldr: item.ldr ?? item.light ?? 0,
+  const mqttClientRef = useRef<any>(null);
+  
+  const { historyData, isLoading } = useFirebase();
 
-    // Tambahkan properti intensitasAir
-    intensitasAir:
-      item.intensitasAir ??
-      item.intensitas_air ??
-      item.rainIntensity ??
-      item.rain_intensity ??
-      0,
 
-  });
+  useEffect(() => {
+    if (!isLoading && historyData.length > 0 && lastActionData === null) {
+      const currentData = historyData[0];
+      let actualFirstAction = currentData;
 
-  // Mapping status MQTT → UI
-  const mapStatus = (message: string) => {
-    if (message.includes("PROSES MASUK")) {
-      return "MENUTUP";
+      for (let i = 1; i < historyData.length; i++) {
+        const item = historyData[i];
+        if (item.mode === currentData.mode && item.status === currentData.status) {
+          actualFirstAction = item;
+        } else {
+          break;
+        }
+      }
+
+      const timeoutId = setTimeout(() => {
+        setLastActionData(actualFirstAction);
+      }, 0);
+
+      return () => clearTimeout(timeoutId);
     }
+  }, [historyData, isLoading, lastActionData]);
 
-    if (message.includes("MASUK")) {
-      return "TERTUTUP";
-    }
-
-    if (message.includes("PROSES KELUAR")) {
-      return "MEMBUKA";
-    }
-
-    if (message.includes("KELUAR")) {
-      return "TERBUKA";
-    }
-
-    return "UNKNOWN";
-  };
+  const normalize = (item: any) => normalizeIoTData(item);
 
   useEffect(() => {
     let lastDataTimestamp = Date.now();
@@ -67,25 +60,16 @@ export function useMqttStatus() {
 
         if (msgStr.includes("Online")) {
           setIsOnline(true);
-          lastDataTimestamp = Date.now();
 
         } else if (msgStr.includes("Offline")) {
           setIsOnline(false);
-        }
-
-        // update status UI
-        const status = mapStatus(msgStr);
-
-        if (status !== "UNKNOWN") {
-          setJemuranStatus(status);
-          setLastActionTime(Date.now());
         }
       }
 
       // Logika Topik Data
       if (topic === "jemuran/data") {
-        lastDataTimestamp = Date.now();
         setIsOnline(true);
+        lastDataTimestamp = Date.now();
 
         try {
           const parsed = JSON.parse(msgStr);
@@ -95,11 +79,23 @@ export function useMqttStatus() {
           setRawHistory((prev) =>
             [...prev, normalized].slice(-200)
           );
+          setLastActionData((prev: IoTData | null) => {
+            if(!prev) return normalized;
+            if (
+              normalized.mode !== prev?.mode ||
+              normalized.status !== prev?.status
+            ) {
+              return normalized;
+            }
+            return prev;
+          });
         } catch (e) {
           console.error("MQTT Parse Error:", e);
         }
       }
     });
+
+    mqttClientRef.current = client;
 
     return () => {
       clearInterval(heartbeatCheck);
@@ -107,5 +103,15 @@ export function useMqttStatus() {
     };
   }, []);
 
-  return { isOnline, latestData, rawHistory, jemuranStatus, lastActionTime };
+  const sendCommand = (payload: CommandPayload) => {
+    if (mqttClientRef.current) {
+      // Pastikan fungsi publish sesuai dengan library MQTT (misal mqtt.js)
+      mqttClientRef.current.publish("jemuran/kontrol", payload);
+      console.log(`Perintah dikirim: ${payload}`);
+    } else {
+      console.error("MQTT belum terhubung, tidak bisa mengirim perintah");
+    }
+  };
+
+  return { isOnline, latestData, rawHistory, lastActionData, sendCommand };
 }

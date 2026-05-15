@@ -8,7 +8,7 @@ export const connectMQTT = (onMessage?: (topic: string, message: string) => void
     const client = mqtt.connect(url);
 
     client.on('connect', () => {
-        client.subscribe(['jemuran/status', 'jemuran/data']);
+        client.subscribe(['jemuran/status', 'jemuran/data', 'jemuran/kontrol']);
         console.log("Connected to MQTT Broker");
     });
 
