@@ -32,6 +32,8 @@ export const normalizeIoTData = (item: any): IoTData => {
         ldr: item.ldr ?? item.light ?? 0,
         intensitasAir: item.intensitasAir ?? 0,
         mode: item.mode ?? "UNKNOWN",
-        status: item.cuacaBuruk === 1,
+        status: item.statusDiLuar !== undefined
+            ? item.statusDiLuar === 0
+            : item.cuacaBuruk === 1,
     };
 };
