@@ -1,8 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { useDevice } from "@/contexts/device-context" // 1. Import Device Context
-
+import { useDevice } from "@/contexts/device-context"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,40 +17,62 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar"
-import { ChevronsUpDownIcon, PlusIcon, Cpu } from "lucide-react" // 2. Gunakan icon Cpu
+import {
+  ChevronsUpDownIcon,
+  PlusIcon,
+  Cpu,
+  Trash2
+} from "lucide-react"
+import { toast } from "sonner"
 
-export function TeamSwitcher() {
+export function DeviceSwitcher() {
   const { isMobile } = useSidebar()
-  
-  // 3. Panggil state dari device context, BUKAN dari props statis
-  const { 
-    devices, 
-    activeDevice, 
-    setActiveDevice, 
-    setShowAddWizard 
+  const {
+    devices,
+    activeDevice,
+    setActiveDevice,
+    removeDevice,
+    setShowAddWizard,
   } = useDevice()
 
-  // 4. Jika user belum punya perangkat, tampilkan tombol Add besar
-  if (!activeDevice && devices.length === 0) {
+  // If no devices yet, show add button
+  if (devices.length === 0) {
     return (
       <SidebarMenu>
         <SidebarMenuItem>
           <SidebarMenuButton
             size="lg"
             onClick={() => setShowAddWizard(true)}
-            className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground border border-dashed border-zinc-300 dark:border-zinc-700"
+            className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
           >
-            <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-zinc-100 dark:bg-zinc-800">
-              <PlusIcon className="size-4" />
+            <div className="flex aspect-square size-8 items-center justify-center rounded-lg border-2 border-dashed border-sidebar-foreground/30 bg-transparent">
+              <PlusIcon className="size-4 text-sidebar-foreground/50" />
             </div>
             <div className="grid flex-1 text-left text-sm leading-tight">
               <span className="truncate font-medium">Add Device</span>
-              <span className="truncate text-xs text-muted-foreground">Connect new clothesline</span>
+              <span className="truncate text-xs text-muted-foreground">
+                Connect your first device
+              </span>
             </div>
           </SidebarMenuButton>
         </SidebarMenuItem>
       </SidebarMenu>
     )
+  }
+
+  const handleRemove = async (e: React.MouseEvent, deviceId: string) => {
+    e.stopPropagation()
+    const confirm = window.confirm(
+      "Are you sure you want to remove this device?"
+    )
+    if (!confirm) return
+
+    const success = await removeDevice(deviceId)
+    if (success) {
+      toast.success("Device removed")
+    } else {
+      toast.error("Failed to remove device")
+    }
   }
 
   return (
@@ -70,8 +91,10 @@ export function TeamSwitcher() {
                 <span className="truncate font-medium">
                   {activeDevice?.name || "Select Device"}
                 </span>
-                <span className="truncate text-xs font-mono">
-                  {activeDevice?.deviceId ? `ID: ${activeDevice.deviceId}` : ""}
+                <span className="truncate text-xs font-mono text-muted-foreground">
+                  {activeDevice
+                    ? `ID: ${activeDevice.deviceId.substring(0, 4)}...${activeDevice.deviceId.substring(8)}`
+                    : "No device selected"}
                 </span>
               </div>
               <ChevronsUpDownIcon className="ml-auto" />
@@ -86,40 +109,51 @@ export function TeamSwitcher() {
             <DropdownMenuLabel className="text-xs text-muted-foreground">
               My Devices
             </DropdownMenuLabel>
-            
-            {/* 5. Looping daftar perangkat dari Firebase/Context */}
             {devices.map((device, index) => (
               <DropdownMenuItem
                 key={device.deviceId}
                 onClick={() => setActiveDevice(device)}
-                className="gap-2 p-2 cursor-pointer"
+                className="gap-2 p-2 group cursor-pointer"
               >
-                <div className="flex size-6 items-center justify-center rounded-md border">
-                  <Cpu className="size-4" />
+                <div className="flex size-6 items-center justify-center rounded-md border shrink-0">
+                  <Cpu className="size-3.5" />
                 </div>
-                <div className="flex flex-col">
-                  <span className="font-medium">{device.name}</span>
-                  <span className="text-[10px] font-mono text-muted-foreground">{device.deviceId}</span>
+
+                <div className="flex-1 min-w-0">
+                  <div className="truncate text-sm">{device.name}</div>
+                  <div className="text-[10px] font-mono text-muted-foreground">
+                    {device.deviceId}
+                  </div>
                 </div>
-                {/* Checkmark indicator for active device */}
+
                 {activeDevice?.deviceId === device.deviceId && (
-                  <div className="ml-auto w-2 h-2 rounded-full bg-green-500" />
+                  <div className="w-2 h-2 rounded-full bg-green-500 shrink-0" />
                 )}
-                <DropdownMenuShortcut>⌘{index + 1}</DropdownMenuShortcut>
+
+                <div
+                  onClick={(e) => handleRemove(e, device.deviceId)}
+                  className="hidden group-hover:flex p-1.5 text-red-500 rounded-md hover:bg-red-100 dark:hover:bg-red-950/50 shrink-0 ml-auto"
+                  title="Remove Device"
+                >
+                  <Trash2 className="size-3.5" />
+                </div>
+
+                <DropdownMenuShortcut className="group-hover:hidden">
+                  ⌘{index + 1}
+                </DropdownMenuShortcut>
               </DropdownMenuItem>
             ))}
-            
             <DropdownMenuSeparator />
-            
-            {/* 6. Tombol Add Device yang memanggil modal/wizard */}
-            <DropdownMenuItem 
+            <DropdownMenuItem
+              className="gap-2 p-2"
               onClick={() => setShowAddWizard(true)}
-              className="gap-2 p-2 cursor-pointer"
             >
               <div className="flex size-6 items-center justify-center rounded-md border bg-transparent">
                 <PlusIcon className="size-4" />
               </div>
-              <div className="font-medium text-muted-foreground">Add Device</div>
+              <div className="font-medium text-muted-foreground">
+                Add Device
+              </div>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
