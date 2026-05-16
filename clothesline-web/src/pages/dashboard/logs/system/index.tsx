@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import SystemLogsPage from "../../../../views/dashboard/logs/system";
 import { connectMQTT } from "@/utils/mqtt";
 import DashboardLayout from "../../../../views/dashboard/layout";
+import { useDevice } from "@/contexts/device-context";
 
 interface SystemLog {
     id: string;
@@ -16,12 +17,19 @@ const SystemLogs = () => {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [weatherData, setWeatherData] = useState<any>(null);
     const [logs, setLogs] = useState<SystemLog[]>([]);
+    const { activeDevice } = useDevice();
+    const deviceId = activeDevice?.deviceId || null;
 
     useEffect(() => {
-        const client = connectMQTT((topic, message) => {
+        // Hentikan eksekusi jika tidak ada device yang dipilih
+        if (!deviceId) return;
+
+        // Masukkan deviceId sebagai parameter pertama
+        const client = connectMQTT(deviceId, (topic, message) => {
             const rawMessage = message.toString();
 
-            if (topic === 'jemuran/status') {
+            // Ubah string topic menjadi format dinamis (Template Literals)
+            if (topic === `jemuran/${deviceId}/status`) {
                 let detectedLevel: SystemLog["level"] = "EVENT";
                 if (rawMessage.includes("ERROR")) detectedLevel = "ERROR";
                 else if (rawMessage.includes("INFO")) detectedLevel = "INFO";
@@ -45,7 +53,7 @@ const SystemLogs = () => {
                     };
                     return [newEntry, ...prev].slice(0, 50);
                 });
-            } else if (topic === 'jemuran/data') {
+            } else if (topic === `jemuran/${deviceId}/data`) {
                 try {
                     const parsed = JSON.parse(rawMessage);
                     setWeatherData(parsed);
@@ -56,9 +64,9 @@ const SystemLogs = () => {
         });
 
         return () => {
-            if (client) client.end();
+            if (client) client.end(true); // Parameter true untuk force disconnect saat unmount
         };
-    }, []);
+    }, [deviceId]); // Daftarkan deviceId sebagai dependency
 
     const breadcrumbs = [
         { label: "Dashboard", href: "/dashboard" },
