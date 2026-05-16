@@ -16,6 +16,7 @@ import { ModeToggle } from "../provider/mode-toggle";
 import { useMqtt } from "@/contexts/mqtt-context";
 import { SwitchBadge } from "../ui/switch-badge";
 import { Clock } from "../ui/clock";
+import { useDevice } from "@/contexts/device-context";
 
 interface BreadcrumbStep {
     label: string;
@@ -27,6 +28,7 @@ interface DashboardHeaderProps {
 }
 
 export function DashboardHeader({ breadcrumbs }: DashboardHeaderProps) {
+    const { activeDevice } = useDevice();
     const { isOnline } = useMqtt();
     return (
         <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 border-b border-zinc-200 dark:border-zinc-800">
@@ -59,16 +61,28 @@ export function DashboardHeader({ breadcrumbs }: DashboardHeaderProps) {
                 </div>
 
                 {/* RIGHT SIDE: Status, Time, & Settings */}
-                <div className="flex items-center gap-6">
-                    {/* Status Online */}
-                    <div className="flex items-center gap-2 pr-2 border-r border-zinc-200 dark:border-zinc-800 h-8">
-                        {
-                            isOnline ? (
-                                <SwitchBadge status="online" />
-                            ) : (
-                                <SwitchBadge status="offline" />
-                            )
-                        }
+                <div className="flex items-center gap-4 sm:gap-6">
+
+                    {/* Device Info & Status Online */}
+                    <div className="flex items-center gap-3 pr-4 border-r border-zinc-200 dark:border-zinc-800">
+                        {/* Nama Perangkat (Sembunyikan di layar HP agar tidak sempit) */}
+                        {activeDevice && (
+                            <div className="hidden sm:flex flex-col items-end">
+                                <span className="text-sm font-semibold leading-none text-zinc-800 dark:text-zinc-200">
+                                    {activeDevice.name}
+                                </span>
+                                <span className="text-[10px] text-muted-foreground font-mono mt-0.5">
+                                    ID: {activeDevice.deviceId}
+                                </span>
+                            </div>
+                        )}
+
+                        {/* Switch Badge Online/Offline */}
+                        {isOnline ? (
+                            <SwitchBadge status="online" />
+                        ) : (
+                            <SwitchBadge status="offline" />
+                        )}
                     </div>
 
                     {/* Clock & Date */}
