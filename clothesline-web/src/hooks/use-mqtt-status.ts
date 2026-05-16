@@ -5,14 +5,14 @@ import { CommandPayload, IoTData, normalizeIoTData } from "@/utils/iot-data";
 import { useState, useEffect, useRef } from "react";
 import { useFirebase } from "@/contexts/firebase-context";
 
-export function useMqttStatus() {
+export function useMqttStatus(deviceId: string | null) {
   const [isOnline, setIsOnline] = useState<boolean>(false);
   const [latestData, setLatestData] = useState<IoTData | null>(null);
   const [rawHistory, setRawHistory] = useState<IoTData[]>([]);
   const [lastActionData, setLastActionData] = useState<IoTData | null>(null);
 
   const mqttClientRef = useRef<any>(null);
-  
+
   const { historyData, isLoading } = useFirebase();
 
 
@@ -40,7 +40,19 @@ export function useMqttStatus() {
 
   const normalize = (item: any) => normalizeIoTData(item);
 
+  // Reset state when deviceId changes
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setIsOnline(false);
+    setLatestData(null);
+    setRawHistory([]);
+    setLastActionData(null);
+  }, [deviceId]);
+
+  useEffect(() => {
+    // Don't connect if no deviceId
+    if (!deviceId) return;
+
     let lastDataTimestamp = Date.now();
 
     // Cek setiap 5 detik, jika data terakhir > 10 detik, anggap offline
@@ -51,23 +63,23 @@ export function useMqttStatus() {
       }
     }, 5000);
 
-    // Ganti 'connectMQTT' dengan fungsi koneksi yang Anda gunakan
-    const client = connectMQTT((topic, message) => {
+    const topicStatus = `jemuran/${deviceId}/status`;
+    const topicData = `jemuran/${deviceId}/data`;
+
+    const client = connectMQTT(deviceId, (topic, message) => {
       const msgStr = message.toString();
 
       // Logika Topik Status
-      if (topic === "jemuran/status") {
-
+      if (topic === topicStatus) {
         if (msgStr.includes("Online")) {
           setIsOnline(true);
-
         } else if (msgStr.includes("Offline")) {
           setIsOnline(false);
         }
       }
 
       // Logika Topik Data
-      if (topic === "jemuran/data") {
+      if (topic === topicData) {
         setIsOnline(true);
         lastDataTimestamp = Date.now();
 
@@ -80,7 +92,7 @@ export function useMqttStatus() {
             [...prev, normalized].slice(-150)
           );
           setLastActionData((prev: IoTData | null) => {
-            if(!prev) return normalized;
+            if (!prev) return normalized;
             if (
               normalized.mode !== prev?.mode ||
               normalized.status !== prev?.status
@@ -100,18 +112,79 @@ export function useMqttStatus() {
     return () => {
       clearInterval(heartbeatCheck);
       client?.end(true);
+      mqttClientRef.current = null;
     };
-  }, []);
+  }, [deviceId]); // Re-connect when deviceId changes
 
   const sendCommand = (payload: CommandPayload) => {
+    if (!deviceId) {
+      console.error("No device selected");
+      return;
+    }
     if (mqttClientRef.current) {
-      // Pastikan fungsi publish sesuai dengan library MQTT (misal mqtt.js)
-      mqttClientRef.current.publish("jemuran/kontrol", payload);
-      console.log(`Perintah dikirim: ${payload}`);
+      const topic = `jemuran/${deviceId}/kontrol`;
+      mqttClientRef.current.publish(topic, payload);
+      console.log(`Command sent to ${topic}: ${payload}`);
     } else {
-      console.error("MQTT belum terhubung, tidak bisa mengirim perintah");
+      console.error("MQTT not connected, cannot send command");
     }
   };
 
-  return { isOnline, latestData, rawHistory, lastActionData, sendCommand };
+  /**
+   * Send a PING to the device's pair topic and listen for PONG response
+   */
+  const pingDevice = (targetDeviceId: string): Promise<boolean> => {
+    return new Promise(async (resolve) => {
+      const url = process.env.NEXT_PUBLIC_MQTT_API_URL;
+      if (!url) {
+        resolve(false);
+        return;
+      }
+
+      const mqttLib = await import("mqtt");
+      const tempClient = mqttLib.default.connect(url);
+      const pairTopic = `jemuran/${targetDeviceId}/pair`;
+      let resolved = false;
+
+      const timeout = setTimeout(() => {
+        if (!resolved) {
+          resolved = true;
+          tempClient.end(true);
+          resolve(false);
+        }
+      }, 15000); // 15 second timeout
+
+      tempClient.on("connect", () => {
+        tempClient.subscribe(pairTopic);
+        tempClient.publish(pairTopic, "PING");
+      });
+
+      tempClient.on("message", (_topic: string, payload: Buffer) => {
+        try {
+          const data = JSON.parse(payload.toString());
+          if (data.pong === true) {
+            if (!resolved) {
+              resolved = true;
+              clearTimeout(timeout);
+              tempClient.end(true);
+              resolve(true);
+            }
+          }
+        } catch {
+          // Not JSON or not a PONG
+        }
+      });
+
+      tempClient.on("error", () => {
+        if (!resolved) {
+          resolved = true;
+          clearTimeout(timeout);
+          tempClient.end(true);
+          resolve(false);
+        }
+      });
+    });
+  };
+
+  return { isOnline, latestData, rawHistory, lastActionData, sendCommand, pingDevice };
 }

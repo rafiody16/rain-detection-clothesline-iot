@@ -1,6 +1,7 @@
 "use client";
 import { createContext, useContext } from "react";
 import { useMqttStatus } from "@/hooks/use-mqtt-status";
+import { useDevice } from "@/contexts/device-context";
 import { CommandPayload } from "@/utils/iot-data";
 
 interface MqttContextType {
@@ -9,6 +10,7 @@ interface MqttContextType {
   rawHistory: any[];
   lastActionData: any;
   sendCommand: (payload: CommandPayload) => void;
+  pingDevice: (deviceId: string) => Promise<boolean>;
 }
 
 const MqttContext = createContext<MqttContextType>({ 
@@ -17,10 +19,13 @@ const MqttContext = createContext<MqttContextType>({
   rawHistory: [],
   lastActionData: null,
   sendCommand: () => {},
+  pingDevice: async () => false,
 });
 
 export function MqttProvider({ children }: { children: React.ReactNode }) {
-  const mqtt = useMqttStatus();
+  const { activeDevice } = useDevice();
+  const deviceId = activeDevice?.deviceId || null;
+  const mqtt = useMqttStatus(deviceId);
   return (
     <MqttContext.Provider value={mqtt}>
       {children}
