@@ -3,18 +3,23 @@
 import { useState, useEffect, useCallback } from "react";
 import { IoTData, normalizeIoTData } from "@/utils/iot-data";
 
-export function useFirebaseStatus() {
+export function useFirebaseStatus(deviceId: string | null) {
   const [historyData, setHistoryData] = useState<IoTData[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
   const fetchHistory = useCallback(async () => {
+    if (!deviceId) {
+      setHistoryData([]);
+      setIsLoading(false);
+      return;
+    }
+
     setIsLoading(true);
     setError(null);
 
     try {
-      const response = await fetch("/api/iot");
-      console.log("Fetch response:", response);
+      const response = await fetch(`/api/iot?deviceId=${deviceId}`);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -33,7 +38,14 @@ export function useFirebaseStatus() {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [deviceId]);
+
+  // Reset and refetch when deviceId changes
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setHistoryData([]);
+    setError(null);
+  }, [deviceId]);
 
   useEffect(() => {
     let isMounted = true;
