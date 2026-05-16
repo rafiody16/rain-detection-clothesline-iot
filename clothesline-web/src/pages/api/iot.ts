@@ -2,14 +2,21 @@ import { NextApiRequest, NextApiResponse } from "next";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
     try {
-        const { date } = req.query; // Ambil parameter tanggal dari URL
+        const { date, deviceId } = req.query; // Ambil parameter dari URL
         const baseUrl = process.env.FIREBASE_DATABASE_URL;
 
         if (!baseUrl) {
             return res.status(500).json({ error: "Firebase URL not configured." });
         }
 
-        let url = `${baseUrl}/jemuran/sensor.json`;
+        // Build path based on whether deviceId is provided
+        // New: /jemuran/{deviceId}/sensor.json
+        // Legacy fallback: /jemuran/sensor.json
+        const sensorPath = deviceId
+            ? `/jemuran/${deviceId}/sensor.json`
+            : `/jemuran/sensor.json`;
+
+        let url = `${baseUrl}${sensorPath}`;
 
         // Jika ada filter tanggal, gunakan query Firebase REST API
         if (date) {
