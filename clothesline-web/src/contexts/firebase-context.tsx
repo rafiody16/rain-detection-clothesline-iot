@@ -22,6 +22,7 @@ export function FirebaseProvider({ children }: { children: React.ReactNode }) {
     const { activeDevice } = useDevice();
     const deviceId = activeDevice?.deviceId || null;
     const firebase = useFirebaseStatus(deviceId);
+
     return (
         <FirebaseContext.Provider value={firebase}>
             {children}
