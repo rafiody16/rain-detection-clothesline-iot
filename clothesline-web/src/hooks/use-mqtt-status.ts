@@ -27,17 +27,23 @@ export function useMqttStatus(deviceId: string | null) {
           break;
         }
       }
-      setLastActionData(actualFirstAction);
+      const timeoutId = setTimeout(() => {
+        setLastActionData(actualFirstAction);
+      }, 0);
+
+      return () => clearTimeout(timeoutId);
     }
   }, [historyData, isLoading, lastActionData]);
 
   useEffect(() => {
-    setIsOnline(false);
-    setLatestData(null);
-    setRawHistory([]);
-    setLastActionData(null);
+    const timeoutId = setTimeout(() => {
+      setIsOnline(false);
+      setLatestData(null);
+      setRawHistory([]);
+      setLastActionData(null);
+    }, 0);
 
-    if (!deviceId) return;
+    if (!deviceId) return () => clearTimeout(timeoutId);
 
     let lastDataTimestamp = Date.now();
 
@@ -84,6 +90,7 @@ export function useMqttStatus(deviceId: string | null) {
     mqttClientRef.current = client;
 
     return () => {
+      clearTimeout(timeoutId);
       clearInterval(heartbeatCheck);
       client?.end(true);
       mqttClientRef.current = null;
