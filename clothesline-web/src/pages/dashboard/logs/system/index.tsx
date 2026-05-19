@@ -16,9 +16,13 @@ interface SystemLog {
 const SystemLogs = () => {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [weatherData, setWeatherData] = useState<any>(null);
-    const [logs, setLogs] = useState<SystemLog[]>([]);
+    // Simpan logs per device ID untuk support multiple devices
+    const [logsByDevice, setLogsByDevice] = useState<Record<string, SystemLog[]>>({});
     const { activeDevice } = useDevice();
     const deviceId = activeDevice?.deviceId || null;
+
+    // Ambil logs hanya untuk device yang aktif saat ini
+    const currentLogs = deviceId ? (logsByDevice[deviceId] || []) : [];
 
     useEffect(() => {
         // Hentikan eksekusi jika tidak ada device yang dipilih
@@ -36,14 +40,15 @@ const SystemLogs = () => {
                 else if (rawMessage.includes("DEBUG")) detectedLevel = "DEBUG";
                 const cleanMessage = rawMessage.replace(/ERROR:|INFO:|DEBUG:|EVENT:/g, "").trim();
 
-                setLogs((prev: SystemLog[]): SystemLog[] => {
+                setLogsByDevice((prevAll) => {
+                    const prev = prevAll[deviceId] || [];
                     if (prev.length > 0 && prev[0].message === cleanMessage) {
                         const updatedLogs = [...prev];
                         updatedLogs[0] = {
                             ...updatedLogs[0],
                             timestamp: new Date().toLocaleTimeString('id-ID')
                         };
-                        return updatedLogs;
+                        return { ...prevAll, [deviceId]: updatedLogs };
                     }
                     const newEntry: SystemLog = {
                         id: Date.now().toString(),
@@ -51,7 +56,8 @@ const SystemLogs = () => {
                         level: detectedLevel,
                         message: cleanMessage,
                     };
-                    return [newEntry, ...prev].slice(0, 50);
+                    const updated = [newEntry, ...prev].slice(0, 50);
+                    return { ...prevAll, [deviceId]: updated };
                 });
             } else if (topic === `jemuran/${deviceId}/data`) {
                 try {
@@ -75,7 +81,7 @@ const SystemLogs = () => {
 
     return (
         <DashboardLayout breadcrumbs={breadcrumbs}>
-            <SystemLogsPage logs={logs} />
+            <SystemLogsPage logs={currentLogs} deviceId={deviceId} />
         </DashboardLayout>
     );
 }
