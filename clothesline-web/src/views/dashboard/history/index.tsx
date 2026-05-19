@@ -30,33 +30,45 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useFirebase } from "@/contexts/firebase-context";
 
-type HistoryPageProps = {
-  logs: any[];
-  isLoading?: boolean;
-  date?: Date | undefined;
-  onDateChange?: (date: Date | undefined) => void;
-};
-
-export default function HistoryPage({ logs, isLoading, date, onDateChange }: HistoryPageProps) {
+export default function HistoryPage() {
   const [itemsPerPage, setItemsPerPage] = useState(25);
   const [inputPage, setInputPage] = useState("1");
+  const { historyData, isLoading } = useFirebase();
+  const [date, setDate] = useState<Date | undefined>(new Date());
 
-  // console.log("Initial logs prop:", logs);
+  const logs = useMemo(() => {
+        return historyData.map((item) => ({
+            id: `${item.timestampValue}`,
+            timestamp: item.rawTimestamp || item.timestamp,
+            temperature: item.suhu,
+            humidity: item.lembab,
+            light: item.ldr,
+            rain: item.status,
+        }));
+    }, [historyData]);
 
   const processedLogs = useMemo(() => {
-    let result = [...logs];
+    const result = [...logs];
     // console.log("Raw logs before processing:", result);
 
     if (date) {
       const targetDate = format(date, "yyyy-MM-dd");
-      result = result.filter(log => log.timestamp.startsWith(targetDate));
+      return result
+        .filter((log) => log.timestamp.startsWith(targetDate))
+        .sort((a, b) => {
+          if (a.timestamp === "-") return 1;
+          if (b.timestamp === "-") return -1;
+          return new Date(b.timestamp.replace(' ', 'T')).getTime() - new Date(a.timestamp.replace(' ', 'T')).getTime();
+        });
     }
 
     return result.sort((a, b) => {
       if (a.timestamp === "-") return 1;
       if (b.timestamp === "-") return -1;
-      return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
+      // WAJIB ditambah replace agar tidak jadi NaN dan merusak array
+      return new Date(b.timestamp.replace(' ', 'T')).getTime() - new Date(a.timestamp.replace(' ', 'T')).getTime();
     });
   }, [logs, date]);
   // console.log("Processed Logs:", processedLogs);
@@ -76,7 +88,7 @@ export default function HistoryPage({ logs, isLoading, date, onDateChange }: His
 
 
   const handleDateChange = (newDate: Date | undefined) => {
-    onDateChange?.(newDate);
+    setDate?.(newDate);
     setInputPage("1");
   };
 
@@ -116,7 +128,7 @@ export default function HistoryPage({ logs, isLoading, date, onDateChange }: His
                   <Button
                     variant={"outline"}
                     className={cn(
-                      "w-[240px] justify-start text-left font-normal",
+                      "w-60 justify-start text-left font-normal",
                       !date && "text-muted-foreground"
                     )}
                   >
@@ -152,20 +164,13 @@ export default function HistoryPage({ logs, isLoading, date, onDateChange }: His
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {isLoading ? (
+                    {processedLogs.length === 0 ? (
                       <TableRow>
                         <TableCell colSpan={5} className="px-6 py-4 text-center text-muted-foreground">
-                          Loading historical data...
+                          {isLoading ? "Loading historical data..." : "No historical data available."}
                         </TableCell>
                       </TableRow>
-                    ) :
-                      processedLogs.length === 0 ? (
-                        <TableRow>
-                          <TableCell colSpan={5} className="px-6 py-4 text-center text-muted-foreground">
-                            No historical data available.
-                          </TableCell>
-                        </TableRow>
-                      ) : (
+                    ) : (
                         currentLogs.map((log, index) => (
                           <TableRow key={log.id || `${log.timestamp}-${index}`} className="border-b hover:bg-muted/50">
                             <TableCell className="px-6 py-4 font-medium text-center">{log.timestamp.includes(' ') ? log.timestamp.split(' ')[1] : log.timestamp}</TableCell>
@@ -193,13 +198,9 @@ export default function HistoryPage({ logs, isLoading, date, onDateChange }: His
               </div>
 
               <div className="flex flex-col md:hidden">
-                {isLoading ? (
-                  <div className="p-8 text-center text-sm text-muted-foreground animate-pulse">
-                    Loading records...
-                  </div>
-                ) : processedLogs.length === 0 ? (
+                {processedLogs.length === 0 ? (
                   <div className="p-8 text-center text-sm text-muted-foreground italic">
-                    No data found for this date.
+                    {isLoading ? "Loading records..." : "No data found for this date."}
                   </div>
                 ) : (
                   <div className="divide-y divide-border">
@@ -233,7 +234,7 @@ export default function HistoryPage({ logs, isLoading, date, onDateChange }: His
                             <span className="text-sm font-medium">{log.humidity}%</span>
                             <span className="text-[9px] text-muted-foreground uppercase">Hum</span>
                           </div>
-                          <div className="flex flex-col min-w-[40px]">
+                          <div className="flex flex-col min-w-10">
                             <span className="text-sm font-medium">{log.light}</span>
                             <span className="text-[9px] text-muted-foreground uppercase">Lux</span>
                           </div>

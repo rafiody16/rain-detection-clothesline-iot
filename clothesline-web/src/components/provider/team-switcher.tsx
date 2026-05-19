@@ -18,18 +18,43 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar"
-import { ChevronsUpDownIcon, PlusIcon, Cpu } from "lucide-react" // 2. Gunakan icon Cpu
+import { ChevronsUpDownIcon, PlusIcon, Cpu, Trash2 } from "lucide-react" // 2. Gunakan icon Cpu
+import { toast } from "sonner"
+import { useMqtt } from "@/contexts/mqtt-context"
 
 export function TeamSwitcher() {
   const { isMobile } = useSidebar()
-  
+
   // 3. Panggil state dari device context, BUKAN dari props statis
-  const { 
-    devices, 
-    activeDevice, 
-    setActiveDevice, 
-    setShowAddWizard 
+  const {
+    devices,
+    activeDevice,
+    setActiveDevice,
+    setShowAddWizard,
+    removeDevice
   } = useDevice()
+
+  const { globalOnlineMap } = useMqtt();
+
+  // Handle remove device dengan konfirmasi
+  const handleRemove = async (
+    e: React.MouseEvent,
+    deviceId: string
+  ) => {
+    e.stopPropagation()
+
+    const confirmed = window.confirm(
+      "Are you sure you want to remove this device?"
+    )
+    if (!confirmed) return
+
+    const success = await removeDevice(deviceId)
+    if (success) {
+      toast.success("Device removed")
+    } else {
+      toast.error("Failed to remove device")
+    }
+  }
 
   // 4. Jika user belum punya perangkat, tampilkan tombol Add besar
   if (!activeDevice && devices.length === 0) {
@@ -86,33 +111,55 @@ export function TeamSwitcher() {
             <DropdownMenuLabel className="text-xs text-muted-foreground">
               My Devices
             </DropdownMenuLabel>
-            
+
             {/* 5. Looping daftar perangkat dari Firebase/Context */}
             {devices.map((device, index) => (
               <DropdownMenuItem
                 key={device.deviceId}
                 onClick={() => setActiveDevice(device)}
-                className="gap-2 p-2 cursor-pointer"
+                className="group flex items-center justify-between gap-2 p-2 cursor-pointer"
               >
-                <div className="flex size-6 items-center justify-center rounded-md border">
-                  <Cpu className="size-4" />
+                <div className="flex items-center gap-3 overflow-hidden">
+                  <div className="flex size-6 shrink-0 items-center justify-center rounded-md border bg-background">
+                    <Cpu className="size-4 text-muted-foreground group-hover:text-foreground transition-colors" />
+                  </div>
+                  <div className="flex flex-col overflow-hidden">
+                    <span className="font-medium truncate">{device.name}</span>
+                    <span className="text-[10px] font-mono text-muted-foreground truncate">
+                      {device.deviceId}
+                    </span>
+                  </div>
                 </div>
-                <div className="flex flex-col">
-                  <span className="font-medium">{device.name}</span>
-                  <span className="text-[10px] font-mono text-muted-foreground">{device.deviceId}</span>
+                <div className="flex items-center gap-2 shrink-0">
+                    <div
+                      className={
+                        "w-2 h-2 rounded-full " +
+                        (globalOnlineMap[device.deviceId] ? "bg-green-500" : "bg-gray-400")
+                      }
+                    />
+                  <div
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleRemove(e, device.deviceId);
+                    }}
+                    className="flex md:hidden md:group-hover:flex items-center justify-center rounded-md p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
+                    title="Remove Device"
+                  >
+                    <Trash2 className="size-4" />
+                  </div>
+                  <DropdownMenuShortcut className="hidden md:block md:group-hover:hidden ml-0">
+                    ⌘{index + 1}
+                  </DropdownMenuShortcut>
+
                 </div>
-                {/* Checkmark indicator for active device */}
-                {activeDevice?.deviceId === device.deviceId && (
-                  <div className="ml-auto w-2 h-2 rounded-full bg-green-500" />
-                )}
-                <DropdownMenuShortcut>⌘{index + 1}</DropdownMenuShortcut>
               </DropdownMenuItem>
             ))}
-            
+
             <DropdownMenuSeparator />
-            
+
             {/* 6. Tombol Add Device yang memanggil modal/wizard */}
-            <DropdownMenuItem 
+            <DropdownMenuItem
               onClick={() => setShowAddWizard(true)}
               className="gap-2 p-2 cursor-pointer"
             >

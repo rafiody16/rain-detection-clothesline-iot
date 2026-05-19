@@ -20,10 +20,13 @@ export function useFirebaseStatus(deviceId: string | null) {
 
     try {
       const response = await fetch(`/api/iot?deviceId=${deviceId}`);
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
+
       const rawData = await response.json();
+
       const dataArray = Array.isArray(rawData)
         ? rawData
         : (rawData?.sensor || []);
