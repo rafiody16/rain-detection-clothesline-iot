@@ -62,29 +62,7 @@ export function DashboardHeader({ breadcrumbs }: DashboardHeaderProps) {
 
                 {/* RIGHT SIDE: Status, Time, & Settings */}
                 <div className="flex items-center gap-4 sm:gap-6">
-
-                    {/* Device Info & Status Online */}
-                    <div className="flex items-center gap-3 pr-4 border-r border-zinc-200 dark:border-zinc-800">
-                        {/* Nama Perangkat (Sembunyikan di layar HP agar tidak sempit) */}
-                        {activeDevice && (
-                            <div className="hidden sm:flex flex-col items-end">
-                                <span className="text-sm font-semibold leading-none text-zinc-800 dark:text-zinc-200">
-                                    {activeDevice.name}
-                                </span>
-                                <span className="text-[10px] text-muted-foreground font-mono mt-0.5">
-                                    ID: {activeDevice.deviceId}
-                                </span>
-                            </div>
-                        )}
-
-                        {/* Switch Badge Online/Offline */}
-                        {isOnline ? (
-                            <SwitchBadge status="online" />
-                        ) : (
-                            <SwitchBadge status="offline" />
-                        )}
-                    </div>
-
+                    <SwitchBadge status={!activeDevice ? "none" : (isOnline ? "online" : "offline")} />
                     {/* Clock & Date */}
                     <Clock />
 

@@ -30,18 +30,24 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useFirebase } from "@/contexts/firebase-context";
 
-type HistoryPageProps = {
-  logs: any[];
-  isLoading?: boolean;
-  date?: Date | undefined;
-  onDateChange?: (date: Date | undefined) => void;
-  deviceName?: string;
-};
-
-export default function HistoryPage({ logs, isLoading, date, onDateChange, deviceName }: HistoryPageProps) {
+export default function HistoryPage() {
   const [itemsPerPage, setItemsPerPage] = useState(25);
   const [inputPage, setInputPage] = useState("1");
+  const { historyData, isLoading } = useFirebase();
+  const [date, setDate] = useState<Date | undefined>(new Date());
+
+  const logs = useMemo(() => {
+        return historyData.map((item) => ({
+            id: `${item.timestampValue}`,
+            timestamp: item.rawTimestamp || item.timestamp,
+            temperature: item.suhu,
+            humidity: item.lembab,
+            light: item.ldr,
+            rain: item.status,
+        }));
+    }, [historyData]);
 
   const processedLogs = useMemo(() => {
     const result = [...logs];
@@ -82,7 +88,7 @@ export default function HistoryPage({ logs, isLoading, date, onDateChange, devic
 
 
   const handleDateChange = (newDate: Date | undefined) => {
-    onDateChange?.(newDate);
+    setDate?.(newDate);
     setInputPage("1");
   };
 
@@ -110,14 +116,6 @@ export default function HistoryPage({ logs, isLoading, date, onDateChange, devic
                 <p className="text-sm text-muted-foreground">
                   View past records of sensor readings and servo actions.
                 </p>
-                {deviceName && (
-                  <div className="flex items-center gap-1.5 mt-1">
-                    <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
-                    <span className="text-xs font-medium text-blue-600 dark:text-blue-400">
-                      {deviceName}
-                    </span>
-                  </div>
-                )}
               </div>
             </div>
 
