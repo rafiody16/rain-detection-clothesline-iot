@@ -18,7 +18,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar"
-import { ChevronsUpDownIcon, PlusIcon, Cpu } from "lucide-react" // 2. Gunakan icon Cpu
+import { ChevronsUpDownIcon, PlusIcon, Cpu, Trash2 } from "lucide-react" // 2. Gunakan icon Cpu
 
 export function TeamSwitcher() {
   const { isMobile } = useSidebar()
@@ -28,8 +28,16 @@ export function TeamSwitcher() {
     devices, 
     activeDevice, 
     setActiveDevice, 
-    setShowAddWizard 
+    setShowAddWizard,
+    removeDevice
   } = useDevice()
+
+  // Handle remove device dengan konfirmasi
+  const handleRemoveDevice = (deviceId: string) => {
+    if (confirm("Are you sure you want to remove this device?")) {
+      removeDevice(deviceId)
+    }
+  }
 
   // 4. Jika user belum punya perangkat, tampilkan tombol Add besar
   if (!activeDevice && devices.length === 0) {
@@ -105,6 +113,16 @@ export function TeamSwitcher() {
                 {activeDevice?.deviceId === device.deviceId && (
                   <div className="ml-auto w-2 h-2 rounded-full bg-green-500" />
                 )}
+                {/* Button Hapus Device */}
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation() // Mencegah trigger pemilihan device
+                    handleRemoveDevice(device.deviceId)
+                  }}
+                  className="ml-auto text-red-500 hover:text-red-700"
+                >
+                  <Trash2 className="size-4" />
+                </button>
                 <DropdownMenuShortcut>⌘{index + 1}</DropdownMenuShortcut>
               </DropdownMenuItem>
             ))}
