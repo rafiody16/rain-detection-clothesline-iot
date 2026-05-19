@@ -2,6 +2,7 @@ export type CommandPayload = "AUTO" | "MANUAL" | "TIMER" | "MASUK" | "KELUAR";
 
 export interface IoTData {
     timestamp: string;
+    rawTimestamp: string;
     timestampValue: number;
     suhu: number;
     lembab: number;
@@ -26,6 +27,7 @@ export const normalizeIoTData = (item: any): IoTData => {
 
     return {
         timestamp: displayTime,
+        rawTimestamp: item.timestamp ?? "",
         timestampValue: timeValue,
         suhu: item.suhu ?? item.temperature ?? 0,
         lembab: item.lembab ?? item.humidity ?? 0,

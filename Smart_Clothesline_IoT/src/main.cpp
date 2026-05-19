@@ -8,8 +8,8 @@
 #include "soc/soc.h"
 #include "soc/rtc_cntl_reg.h"
 
-#define DHTPIN 27
-#define DHTTYPE DHT22
+#define DHTPIN 25
+#define DHTTYPE DHT11
 DHT dht(DHTPIN, DHTTYPE);
 
 // Servo
@@ -17,9 +17,9 @@ DHT dht(DHTPIN, DHTTYPE);
 Servo servoJemuran;
 
 // LED indikator
-#define R 12
-#define G 32
-#define B 33
+#define R 13
+#define G 12
+#define B 14
 
 // Sensor
 #define LDR_PIN 34
@@ -49,7 +49,7 @@ String deviceId;
 // =====================
 // MQTT Config
 // =====================
-const char *mqtt_server = "3.107.238.64";
+const char *mqtt_server = "3.27.138.96";
 
 WiFiClient espClient;
 PubSubClient client(espClient);
@@ -248,48 +248,52 @@ int bacaSensorStabil(int pin)
 
 void setup()
 {
-  WRITE_PERI_REG(RTC_CNTL_BROWN_OUT_REG, 0);
+  // WRITE_PERI_REG(RTC_CNTL_BROWN_OUT_REG, 0);
   Serial.begin(115200);
-  delay(1000);
-  dht.begin();
+  delay(1000); 
+  Serial.println("System Booting...");
 
   pinMode(RAIN_ANALOG, INPUT);
   pinMode(R, OUTPUT);
   pinMode(G, OUTPUT);
   pinMode(B, OUTPUT);
-
   setLeds(true, false, false);
 
-  // Generate unique device ID from MAC address
+  // 2. Inisialisasi Sensor (Ringan)
+  dht.begin();
   deviceId = getDeviceId();
+  Serial.println("Device ID: " + deviceId);
   setupTopics();
 
-  Serial.println("==============================");
-  Serial.println("SMART CLOTHESLINE IoT");
-  Serial.println("Device ID: " + deviceId);
-  Serial.println("==============================");
+  // 3. JEDA DAYA 1 - Biarkan tegangan adaptor rileks
+  delay(1000); 
 
-  setupWiFi();
-
-  client.setServer(mqtt_server, 1883);
-  client.setBufferSize(512); // Increase buffer for longer topic names
-  client.setCallback(callback);
-
-  Serial.println("Menstabilkan daya sebelum menyalakan Servo...");
-  delay(2000);
-
-  servoJemuran.attach(SERVO_PIN);
+  // 4. Inisialisasi Servo DULU sebelum WiFi
+  // Servo sering narik arus kaget saat di-attach. 
+  // Kita lakukan saat WiFi (RF) masih mati.
+  Serial.println("Attach Servo...");
+  // WAJIB DITAMBAHKAN: Konfigurasi Timer & Batasan PWM untuk Servo 360
+  ESP32PWM::allocateTimer(0);
+  servoJemuran.setPeriodHertz(50); // Frekuensi standar servo 50Hz
+  servoJemuran.attach(SERVO_PIN, 1000, 2000); // Batasi sinyal agar tidak ditolak servo
+  
   servoJemuran.write(BERHENTI);
   statusDiLuar = false;
+
+  // 5. JEDA DAYA 2 - Menunggu sisa lonjakan arus servo hilang
+  delay(2000);
+
+  // 6. Inisialisasi WiFi (Paling berat)
+  // Saat ini servo sudah posisi diam (hold), jadi daya bisa fokus ke RF WiFi
+  setupWiFi();
+
+  // 7. Koneksi MQTT
+  client.setServer(mqtt_server, 1883);
+  client.setBufferSize(512);
+  client.setCallback(callback);
   reconnectMQTT();
 
-  Serial.println("SISTEM JEMURAN PINTAR - READY DENGAN WEB KONTROL");
-  Serial.println("Listening on topics:");
-  Serial.println("  Data: " + topicData);
-  Serial.println("  Status: " + topicStatus);
-  Serial.println("  Kontrol: " + topicKontrol);
-  Serial.println("  Pair: " + topicPair);
-  Serial.println("  WiFi Reset: " + topicWifiReset);
+  Serial.println("SISTEM JEMURAN PINTAR - READY");
 }
 
 void loop()
@@ -304,16 +308,16 @@ void loop()
   int intensitasAir = bacaSensorStabil(RAIN_ANALOG);
 
   // Cek apakah sensor berhasil dibaca
-  if (isnan(suhu) || isnan(lembab))
-  {
-    Serial.println("Gagal membaca sensor DHT!");
-    client.publish(topicStatus.c_str(), "ERROR: Gagal membaca sensor DHT!");
-    return;
-  }
   if (nilaiLDR == 0)
   {
     Serial.println("Gagal membaca sensor LDR!");
     client.publish(topicStatus.c_str(), "ERROR: Gagal membaca sensor LDR!");
+    return;
+  }
+  if (isnan(suhu) || isnan(lembab))
+  {
+    Serial.println("Gagal membaca sensor DHT!");
+    client.publish(topicStatus.c_str(), "ERROR: Gagal membaca sensor DHT!");
     return;
   }
   if (intensitasAir == 0)
@@ -333,7 +337,7 @@ void loop()
            suhu, lembab, nilaiLDR, intensitasAir, cuacaBuruk ? 1 : 0, modeAuto ? "AUTO" : "MANUAL", statusDiLuar ? 1 : 0, deviceId.c_str());
   client.publish(topicData.c_str(), msg);
 
-  if (modeAuto)
+if (modeAuto)
   {
     if (cuacaBuruk)
     {
@@ -345,25 +349,27 @@ void loop()
         delay(DURASI_PUTAR);
         servoJemuran.write(BERHENTI);
         statusDiLuar = false;
-        client.publish(topicStatus.c_str(), "EVENT: PROSES MASUK (Auto)");
+        
+        // Pindahkan ke DALAM blok if agar hanya dieksekusi 1x saat bergerak
+        setLeds(true, false, false); 
+        client.publish(topicStatus.c_str(), "EVENT: JEMURAN MASUK (Auto)");
       }
-      setLeds(true, false, false);
-      client.publish(topicStatus.c_str(), "EVENT: MASUK (Auto)");
     }
     else
     {
       if (statusDiLuar == false)
       {
         Serial.println("Aksi Auto: Mendorong jemuran KELUAR...");
-        setLeds(true, true, false);
+        setLeds(false, true, false); // Perbaikan typo (sebelumnya true, true, false)
         servoJemuran.write(PUTAR_KELUAR);
         delay(DURASI_PUTAR);
         servoJemuran.write(BERHENTI);
         statusDiLuar = true;
-        client.publish(topicStatus.c_str(), "EVENT: PROSES KELUAR (Auto)");
+        
+        // Pindahkan ke DALAM blok if agar hanya dieksekusi 1x saat bergerak
+        setLeds(false, false, true); 
+        client.publish(topicStatus.c_str(), "EVENT: JEMURAN KELUAR (Auto)");
       }
-      setLeds(false, false, true);
-      client.publish(topicStatus.c_str(), "EVENT: KELUAR (Auto)");
     }
   }
 
