@@ -262,6 +262,7 @@ void setup()
   // 2. Inisialisasi Sensor (Ringan)
   dht.begin();
   deviceId = getDeviceId();
+  Serial.println("Device ID: " + deviceId);
   setupTopics();
 
   // 3. JEDA DAYA 1 - Biarkan tegangan adaptor rileks
