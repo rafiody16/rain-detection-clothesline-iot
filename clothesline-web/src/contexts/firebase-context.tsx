@@ -1,6 +1,7 @@
 "use client";
 import { createContext, useContext } from "react";
 import { useFirebaseStatus } from "@/hooks/use-firebase-status";
+import { useDevice } from "@/contexts/device-context";
 import { IoTData } from "@/utils/iot-data";
 
 interface FirebaseContextType {
@@ -18,7 +19,10 @@ const FirebaseContext = createContext<FirebaseContextType>({
 });
 
 export function FirebaseProvider({ children }: { children: React.ReactNode }) {
-    const firebase = useFirebaseStatus();
+    const { activeDevice } = useDevice();
+    const deviceId = activeDevice?.deviceId || null;
+    const firebase = useFirebaseStatus(deviceId);
+
     return (
         <FirebaseContext.Provider value={firebase}>
             {children}

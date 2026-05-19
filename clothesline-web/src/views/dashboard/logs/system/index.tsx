@@ -10,7 +10,7 @@ interface SystemLog {
   message: string;
 }
 
-export default function SystemLogsPage({logs = []}: {logs?: SystemLog[]}) {
+export default function SystemLogsPage({logs = [], deviceId = null}: {logs?: SystemLog[], deviceId?: string | null}) {
   const getLogColor = (level: string) => {
     switch (level) {
       case "ERROR": return "text-red-400";
@@ -36,12 +36,16 @@ export default function SystemLogsPage({logs = []}: {logs?: SystemLog[]}) {
           <Card>
             <CardHeader>
               <CardTitle>ESP32 Diagnostic Logs</CardTitle>
-              <CardDescription>Event traces for servo actions and sensor failures.</CardDescription>
+              <CardDescription>
+                {deviceId ? `Device: ${deviceId} • Event traces for servo actions and sensor failures.` : 'Select a device to view logs'}
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="bg-black/90 text-green-400 p-4 rounded-lg font-mono text-sm h-fit max-h-[300px] overflow-y-auto scrollbar-thin scrollbar-thumb-zinc-800 dark:scrollbar-thumb-zinc-600">
-                {logs.length === 0 ? (
-                  <div className="text-zinc-600 italic">Waiting for incoming logs...</div>
+                {!deviceId ? (
+                  <div className="text-yellow-400 italic">⚠️ Select a device from sidebar to view logs</div>
+                ) : logs.length === 0 ? (
+                  <div className="text-zinc-600 italic">⏳ Waiting for incoming logs...</div>
                 ) : (
                   logs.map((log) => (
                     <div key={log.id} className="mb-1 flex gap-2 hover:bg-zinc-800/50 transition-colors">

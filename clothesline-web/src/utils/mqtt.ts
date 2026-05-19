@@ -1,15 +1,23 @@
 import mqtt, { MqttClient } from "mqtt";
 
-export const connectMQTT = (onMessage?: (topic: string, message: string) => void): MqttClient | null => {
+export const connectMQTT = (
+    deviceId: string | null,
+    onMessage?: (topic: string, message: string) => void
+): MqttClient | null => {
     const url = process.env.NEXT_PUBLIC_MQTT_API_URL;
 
-    if (!url) return null;
+    if (!url || !deviceId) return null;
 
     const client = mqtt.connect(url);
 
     client.on('connect', () => {
-        client.subscribe(['jemuran/status', 'jemuran/data', 'jemuran/kontrol']);
-        console.log("Connected to MQTT Broker");
+        // Subscribe to device-specific topics
+        client.subscribe([
+            `jemuran/${deviceId}/status`,
+            `jemuran/${deviceId}/data`,
+            `jemuran/${deviceId}/pair`,
+        ]);
+        console.log(`Connected to MQTT Broker (Device: ${deviceId})`);
     });
 
     if (onMessage) {

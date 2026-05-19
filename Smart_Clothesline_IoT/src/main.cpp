@@ -4,11 +4,12 @@
 #include <WiFi.h>
 #include <PubSubClient.h>
 #include <WiFiManager.h>
+#include <Preferences.h>
 #include "soc/soc.h"
 #include "soc/rtc_cntl_reg.h"
 
-#define DHTPIN 27
-#define DHTTYPE DHT22
+#define DHTPIN 25
+#define DHTTYPE DHT11
 DHT dht(DHTPIN, DHTTYPE);
 
 // Servo
@@ -16,9 +17,9 @@ DHT dht(DHTPIN, DHTTYPE);
 Servo servoJemuran;
 
 // LED indikator
-#define R 12
-#define G 32
-#define B 33
+#define R 13
+#define G 12
+#define B 14
 
 // Sensor
 #define LDR_PIN 34
@@ -41,21 +42,57 @@ bool statusDiLuar = false;
 bool modeAuto = true;
 
 // =====================
+// DEVICE ID (Unique per ESP32, based on MAC Address)
+// =====================
+String deviceId;
+
+// =====================
 // MQTT Config
 // =====================
-const char* mqtt_server = "3.107.238.64";
-// const char *mqtt_server = "broker.emqx.io";
+const char *mqtt_server = "3.27.138.96";
 
 WiFiClient espClient;
 PubSubClient client(espClient);
+
+// MQTT Topics (namespaced by device ID)
+String topicData;
+String topicStatus;
+String topicKontrol;
+String topicPair;
+String topicWifiReset;
 
 // Deklarasi Fungsi (Prototyping agar tidak error di VS Code)
 void setLeds(bool dalam, bool proses, bool luar);
 
 // =====================
+// Generate Device ID from MAC Address
+// =====================
+String getDeviceId()
+{
+  uint8_t mac[6];
+  WiFi.macAddress(mac);
+  char id[13];
+  snprintf(id, sizeof(id), "%02X%02X%02X%02X%02X%02X",
+           mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+  return String(id);
+}
+
+// =====================
+// Setup MQTT Topics with Device ID namespace
+// =====================
+void setupTopics()
+{
+  topicData = "jemuran/" + deviceId + "/data";
+  topicStatus = "jemuran/" + deviceId + "/status";
+  topicKontrol = "jemuran/" + deviceId + "/kontrol";
+  topicPair = "jemuran/" + deviceId + "/pair";
+  topicWifiReset = "jemuran/" + deviceId + "/wifi-reset";
+}
+
+// =====================
 // Fungsi Terima Perintah dari Web (Callback)
-  // =====================
-  void callback(char *topic, byte *payload, unsigned int length)
+// =====================
+void callback(char *topic, byte *payload, unsigned int length)
 {
   String pesan = "";
   for (unsigned int i = 0; i < length; i++)
@@ -63,11 +100,14 @@ void setLeds(bool dalam, bool proses, bool luar);
     pesan += (char)payload[i];
   }
 
+  String topicStr = String(topic);
+
   Serial.print("Pesan Web masuk di topik [");
   Serial.print(topic);
   Serial.println("]: " + pesan);
 
-  if (String(topic) == "jemuran/kontrol")
+  // === KONTROL (MASUK/KELUAR/AUTO/MANUAL) ===
+  if (topicStr == topicKontrol)
   {
     if (pesan == "MASUK")
     {
@@ -81,7 +121,7 @@ void setLeds(bool dalam, bool proses, bool luar);
         servoJemuran.write(BERHENTI);
         statusDiLuar = false;
         setLeds(true, false, false);
-        client.publish("jemuran/status", "DEBUG: MASUK (Manual Web)");
+        client.publish(topicStatus.c_str(), "DEBUG: MASUK (Manual Web)");
       }
     }
     else if (pesan == "KELUAR")
@@ -96,33 +136,62 @@ void setLeds(bool dalam, bool proses, bool luar);
         servoJemuran.write(BERHENTI);
         statusDiLuar = true;
         setLeds(false, false, true);
-        client.publish("jemuran/status", "DEBUG: KELUAR (Manual Web)");
+        client.publish(topicStatus.c_str(), "DEBUG: KELUAR (Manual Web)");
       }
     }
     else if (pesan == "AUTO")
     {
       Serial.println("Web Perintah: MODE OTOMATIS AKTIF");
       modeAuto = true;
-      client.publish("jemuran/status", "DEBUG: MODE AUTO");
+      client.publish(topicStatus.c_str(), "DEBUG: MODE AUTO");
     }
     else if (pesan == "MANUAL")
     {
       Serial.println("Web Perintah: MODE MANUAL AKTIF");
       modeAuto = false;
-      client.publish("jemuran/status", "DEBUG: MODE MANUAL");
+      client.publish(topicStatus.c_str(), "DEBUG: MODE MANUAL");
+    }
+  }
+
+  // === PAIRING: Respond to PING with device info ===
+  else if (topicStr == topicPair)
+  {
+    if (pesan == "PING")
+    {
+      Serial.println("Pairing PING received, sending PONG...");
+      String response = "{\"deviceId\":\"" + deviceId + "\",\"pong\":true,\"ip\":\"" + WiFi.localIP().toString() + "\"}";
+      client.publish(topicPair.c_str(), response.c_str());
+    }
+  }
+
+  // === WIFI RESET: Reset WiFi credentials and restart in AP mode ===
+  else if (topicStr == topicWifiReset)
+  {
+    if (pesan == "RESET")
+    {
+      Serial.println("WiFi Reset command received! Restarting in AP mode...");
+      client.publish(topicStatus.c_str(), "INFO: WiFi Reset - Restarting in AP mode...");
+      delay(1000);
+      WiFiManager wm;
+      wm.resetSettings();
+      ESP.restart();
     }
   }
 }
 
 // =====================
-// Fungsi Koneksi WiFiManager
+// Fungsi Koneksi WiFiManager (with device-specific AP name)
 // =====================
 void setupWiFi()
 {
   Serial.println("Memulai WiFiManager...");
   WiFiManager wifiManager;
 
-  if (!wifiManager.autoConnect("Jemuran_Pintar"))
+  // Use last 6 characters of device ID for AP name
+  String apName = "Clothesline_" + deviceId.substring(6);
+  Serial.println("AP Name: " + apName);
+
+  if (!wifiManager.autoConnect(apName.c_str()))
   {
     Serial.println("Gagal connect dan hit timeout");
     delay(3000);
@@ -137,18 +206,22 @@ void reconnectMQTT()
   while (!client.connected())
   {
     Serial.print("Connecting MQTT...");
-    if (client.connect("ESP32-Jemuran", "jemuran/status", 1, true, "Offline"))
+    // Use device ID as MQTT client ID to avoid conflicts with multiple devices
+    String clientId = "ESP32-" + deviceId;
+    if (client.connect(clientId.c_str(), topicStatus.c_str(), 1, true, "Offline"))
     {
       Serial.println("Connected!");
-      client.publish("jemuran/status", "Online", true);
-      client.publish("jemuran/status", "INFO: ESP32 Connected to MQTT Broker");
-      client.subscribe("jemuran/kontrol");
+      client.publish(topicStatus.c_str(), "Online", true);
+      client.publish(topicStatus.c_str(), "INFO: ESP32 Connected to MQTT Broker");
+      // Subscribe to device-specific topics
+      client.subscribe(topicKontrol.c_str());
+      client.subscribe(topicPair.c_str());
+      client.subscribe(topicWifiReset.c_str());
     }
     else
     {
       Serial.print("Gagal rc=");
       Serial.println(client.state());
-      client.publish("jemuran/status", "ERROR: Gagal connect ke MQTT Broker, coba lagi...");
       delay(3000);
     }
   }
@@ -175,32 +248,52 @@ int bacaSensorStabil(int pin)
 
 void setup()
 {
-  WRITE_PERI_REG(RTC_CNTL_BROWN_OUT_REG, 0);
+  // WRITE_PERI_REG(RTC_CNTL_BROWN_OUT_REG, 0);
   Serial.begin(115200);
-  delay(1000);
-  dht.begin();
+  delay(1000); 
+  Serial.println("System Booting...");
 
   pinMode(RAIN_ANALOG, INPUT);
   pinMode(R, OUTPUT);
   pinMode(G, OUTPUT);
   pinMode(B, OUTPUT);
-
   setLeds(true, false, false);
 
-  setupWiFi();
+  // 2. Inisialisasi Sensor (Ringan)
+  dht.begin();
+  deviceId = getDeviceId();
+  Serial.println("Device ID: " + deviceId);
+  setupTopics();
 
-  client.setServer(mqtt_server, 1883);
-  client.setCallback(callback);
+  // 3. JEDA DAYA 1 - Biarkan tegangan adaptor rileks
+  delay(1000); 
 
-  Serial.println("Menstabilkan daya sebelum menyalakan Servo...");
-  delay(2000);
-
-  servoJemuran.attach(SERVO_PIN);
+  // 4. Inisialisasi Servo DULU sebelum WiFi
+  // Servo sering narik arus kaget saat di-attach. 
+  // Kita lakukan saat WiFi (RF) masih mati.
+  Serial.println("Attach Servo...");
+  // WAJIB DITAMBAHKAN: Konfigurasi Timer & Batasan PWM untuk Servo 360
+  ESP32PWM::allocateTimer(0);
+  servoJemuran.setPeriodHertz(50); // Frekuensi standar servo 50Hz
+  servoJemuran.attach(SERVO_PIN, 1000, 2000); // Batasi sinyal agar tidak ditolak servo
+  
   servoJemuran.write(BERHENTI);
   statusDiLuar = false;
+
+  // 5. JEDA DAYA 2 - Menunggu sisa lonjakan arus servo hilang
+  delay(2000);
+
+  // 6. Inisialisasi WiFi (Paling berat)
+  // Saat ini servo sudah posisi diam (hold), jadi daya bisa fokus ke RF WiFi
+  setupWiFi();
+
+  // 7. Koneksi MQTT
+  client.setServer(mqtt_server, 1883);
+  client.setBufferSize(512);
+  client.setCallback(callback);
   reconnectMQTT();
 
-  Serial.println("SISTEM JEMURAN PINTAR - READY DENGAN WEB KONTROL");
+  Serial.println("SISTEM JEMURAN PINTAR - READY");
 }
 
 void loop()
@@ -215,22 +308,22 @@ void loop()
   int intensitasAir = bacaSensorStabil(RAIN_ANALOG);
 
   // Cek apakah sensor berhasil dibaca
-  if (isnan(suhu) || isnan(lembab))
-  {
-    Serial.println("Gagal membaca sensor DHT!");
-    client.publish("jemuran/status", "ERROR: Gagal membaca sensor DHT!");
-    return;
-  }
   if (nilaiLDR == 0)
   {
     Serial.println("Gagal membaca sensor LDR!");
-    client.publish("jemuran/status", "ERROR: Gagal membaca sensor LDR!");
+    client.publish(topicStatus.c_str(), "ERROR: Gagal membaca sensor LDR!");
+    return;
+  }
+  if (isnan(suhu) || isnan(lembab))
+  {
+    Serial.println("Gagal membaca sensor DHT!");
+    client.publish(topicStatus.c_str(), "ERROR: Gagal membaca sensor DHT!");
     return;
   }
   if (intensitasAir == 0)
   {
     Serial.println("Gagal membaca sensor hujan!");
-    client.publish("jemuran/status", "ERROR: Gagal membaca sensor hujan!");
+    client.publish(topicStatus.c_str(), "ERROR: Gagal membaca sensor hujan!");
     return;
   }
 
@@ -238,13 +331,13 @@ void loop()
   bool sedangHujan = (intensitasAir < BATAS_HUJAN);
   bool cuacaBuruk = sedangHujan || gelap || (lembab > BATAS_LEMBAB) || (suhu < BATAS_SUHU);
 
-  char msg[200];
+  char msg[256];
   snprintf(msg, sizeof(msg),
-           "{\"suhu\":%.1f,\"lembab\":%.1f,\"ldr\":%d,\"intensitasAir\":%d,\"cuacaBuruk\":%d,\"mode\":\"%s\",\"statusDiLuar\":%d}",
-           suhu, lembab, nilaiLDR, intensitasAir, cuacaBuruk ? 1 : 0, modeAuto ? "AUTO" : "MANUAL", statusDiLuar ? 1 : 0);
-  client.publish("jemuran/data", msg);
+           "{\"suhu\":%.1f,\"lembab\":%.1f,\"ldr\":%d,\"intensitasAir\":%d,\"cuacaBuruk\":%d,\"mode\":\"%s\",\"statusDiLuar\":%d,\"deviceId\":\"%s\"}",
+           suhu, lembab, nilaiLDR, intensitasAir, cuacaBuruk ? 1 : 0, modeAuto ? "AUTO" : "MANUAL", statusDiLuar ? 1 : 0, deviceId.c_str());
+  client.publish(topicData.c_str(), msg);
 
-  if (modeAuto)
+if (modeAuto)
   {
     if (cuacaBuruk)
     {
@@ -256,25 +349,27 @@ void loop()
         delay(DURASI_PUTAR);
         servoJemuran.write(BERHENTI);
         statusDiLuar = false;
-        client.publish("jemuran/status", "EVENT: PROSES MASUK (Auto)");  
+        
+        // Pindahkan ke DALAM blok if agar hanya dieksekusi 1x saat bergerak
+        setLeds(true, false, false); 
+        client.publish(topicStatus.c_str(), "EVENT: JEMURAN MASUK (Auto)");
       }
-      setLeds(true, false, false);
-      client.publish("jemuran/status", "EVENT: MASUK (Auto)");
     }
     else
     {
       if (statusDiLuar == false)
       {
         Serial.println("Aksi Auto: Mendorong jemuran KELUAR...");
-        setLeds(true, true, false);
+        setLeds(false, true, false); // Perbaikan typo (sebelumnya true, true, false)
         servoJemuran.write(PUTAR_KELUAR);
         delay(DURASI_PUTAR);
         servoJemuran.write(BERHENTI);
         statusDiLuar = true;
-        client.publish("jemuran/status", "EVENT: PROSES KELUAR (Auto)");
+        
+        // Pindahkan ke DALAM blok if agar hanya dieksekusi 1x saat bergerak
+        setLeds(false, false, true); 
+        client.publish(topicStatus.c_str(), "EVENT: JEMURAN KELUAR (Auto)");
       }
-      setLeds(false, false, true);
-      client.publish("jemuran/status", "EVENT: KELUAR (Auto)");
     }
   }
 
