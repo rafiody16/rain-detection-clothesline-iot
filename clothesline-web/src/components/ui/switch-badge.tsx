@@ -1,4 +1,4 @@
-type BadgeStatus = "online" | "live" | "off" | "error" | "warning" | "idle" | "offline";
+type BadgeStatus = "online" | "live" | "off" | "error" | "warning" | "idle" | "offline" | "none";
 
 interface StatusConfig {
     label: string;
@@ -62,6 +62,12 @@ export function SwitchBadge({ status }: SwitchBadgeProps) {
             pingClass: "bg-zinc-400",
             textClass: "text-zinc-600 dark:text-zinc-400",
             animate: false,
+        },
+        none: {
+        label: "No Device",
+        colorClass: "bg-zinc-300 dark:bg-zinc-700",
+        textClass: "text-zinc-500 dark:text-zinc-500",
+        animate: false,
         }
     };
 

@@ -38,21 +38,21 @@ export default function Dashboard() {
   const stats = [
     {
       title: "Temperature",
-      value: formatNum(latestData?.suhu) ? `${formatNum(latestData.suhu)}°C` : "—",
+      value: formatNum(latestData?.suhu) ? `${formatNum(latestData?.suhu)}°C` : "—",
       icon: <ThermometerSun className="h-4 w-4 text-amber-500" />,
       color: "bg-amber-500/10",
       desc: latestData ? "Live" : "No data"
     },
     {
       title: "Humidity",
-      value: formatNum(latestData?.lembab) ? `${formatNum(latestData.lembab)}%` : "—",
+      value: formatNum(latestData?.lembab) ? `${formatNum(latestData?.lembab)}%` : "—",
       icon: <Wind className="h-4 w-4 text-blue-500" />,
       color: "bg-blue-500/10",
       desc: latestData ? "Live" : "No data"
     },
     {
       title: "Light Level (LDR)",
-      value: formatNum(latestData?.ldr, 0) ? `${formatNum(latestData.ldr, 0)} lux` : "—",
+      value: formatNum(latestData?.ldr, 0) ? `${formatNum(latestData?.ldr, 0)} lux` : "—",
       icon: <Sun className="h-4 w-4 text-yellow-500" />,
       color: "bg-yellow-500/10",
       desc: Number(latestData?.ldr) > 1600 ? "Dark" : "Normal"
@@ -60,7 +60,7 @@ export default function Dashboard() {
     {
       id: `rain-${latestData?.intensitasAir}`,
       title: "Rain Status",
-      value: formatNum(latestData?.intensitasAir, 0) ? `${formatNum(latestData.intensitasAir, 0)}` : "—",
+      value: formatNum(latestData?.intensitasAir, 0) ? `${formatNum(latestData?.intensitasAir, 0)}` : "—",
       icon: <CloudRain className="h-4 w-4 text-cyan-500" />,
       color: "bg-cyan-500/10",
       desc: Number(latestData?.intensitasAir ?? 0) < 3000

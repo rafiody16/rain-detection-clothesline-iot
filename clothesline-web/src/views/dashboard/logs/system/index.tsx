@@ -1,7 +1,10 @@
 "use client"
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { useDevice } from "@/contexts/device-context";
+import { connectMQTT } from "@/utils/mqtt";
 import { Settings } from "lucide-react"
+import { useEffect, useState } from "react";
 
 interface SystemLog {
   id: string;
@@ -10,7 +13,61 @@ interface SystemLog {
   message: string;
 }
 
-export default function SystemLogsPage({logs = [], deviceId = null}: {logs?: SystemLog[], deviceId?: string | null}) {
+export default function SystemLogsPage() {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [weatherData, setWeatherData] = useState<any>(null);
+  const [logs, setLogs] = useState<SystemLog[]>([]);
+  const { activeDevice } = useDevice();
+  const deviceId = activeDevice?.deviceId || null;
+
+  useEffect(() => {
+          // Hentikan eksekusi jika tidak ada device yang dipilih
+          if (!deviceId) return;
+  
+          // Masukkan deviceId sebagai parameter pertama
+          const client = connectMQTT(deviceId, (topic, message) => {
+              const rawMessage = message.toString();
+  
+              // Ubah string topic menjadi format dinamis (Template Literals)
+              if (topic === `jemuran/${deviceId}/status`) {
+                  let detectedLevel: SystemLog["level"] = "EVENT";
+                  if (rawMessage.includes("ERROR")) detectedLevel = "ERROR";
+                  else if (rawMessage.includes("INFO")) detectedLevel = "INFO";
+                  else if (rawMessage.includes("DEBUG")) detectedLevel = "DEBUG";
+                  const cleanMessage = rawMessage.replace(/ERROR:|INFO:|DEBUG:|EVENT:/g, "").trim();
+  
+                  setLogs((prev: SystemLog[]): SystemLog[] => {
+                      if (prev.length > 0 && prev[0].message === cleanMessage) {
+                          const updatedLogs = [...prev];
+                          updatedLogs[0] = {
+                              ...updatedLogs[0],
+                              timestamp: new Date().toLocaleTimeString('id-ID')
+                          };
+                          return updatedLogs;
+                      }
+                      const newEntry: SystemLog = {
+                          id: Date.now().toString(),
+                          timestamp: new Date().toLocaleTimeString('id-ID'),
+                          level: detectedLevel,
+                          message: cleanMessage,
+                      };
+                      return [newEntry, ...prev].slice(0, 50);
+                  });
+              } else if (topic === `jemuran/${deviceId}/data`) {
+                  try {
+                      const parsed = JSON.parse(rawMessage);
+                      setWeatherData(parsed);
+                  } catch (e) {
+                      console.error("Gagal parsing JSON cuaca", e);
+                  }
+              }
+          });
+  
+          return () => {
+              if (client) client.end(true); // Parameter true untuk force disconnect saat unmount
+          };
+      }, [deviceId]); // Daftarkan deviceId sebagai dependency
+
   const getLogColor = (level: string) => {
     switch (level) {
       case "ERROR": return "text-red-400";
@@ -36,16 +93,12 @@ export default function SystemLogsPage({logs = [], deviceId = null}: {logs?: Sys
           <Card>
             <CardHeader>
               <CardTitle>ESP32 Diagnostic Logs</CardTitle>
-              <CardDescription>
-                {deviceId ? `Device: ${deviceId} • Event traces for servo actions and sensor failures.` : 'Select a device to view logs'}
-              </CardDescription>
+              <CardDescription>Event traces for servo actions and sensor failures.</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="bg-black/90 text-green-400 p-4 rounded-lg font-mono text-sm h-fit max-h-[300px] overflow-y-auto scrollbar-thin scrollbar-thumb-zinc-800 dark:scrollbar-thumb-zinc-600">
-                {!deviceId ? (
-                  <div className="text-yellow-400 italic">⚠️ Select a device from sidebar to view logs</div>
-                ) : logs.length === 0 ? (
-                  <div className="text-zinc-600 italic">⏳ Waiting for incoming logs...</div>
+                {logs.length === 0 ? (
+                  <div className="text-zinc-600 italic">Waiting for incoming logs...</div>
                 ) : (
                   logs.map((log) => (
                     <div key={log.id} className="mb-1 flex gap-2 hover:bg-zinc-800/50 transition-colors">
