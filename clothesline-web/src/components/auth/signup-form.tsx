@@ -34,10 +34,23 @@ export function SignupForm({
     const email = formData.get("email") as string
     const password = formData.get("password") as string
     const confirmPassword = formData.get("confirmPassword") as string
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-    if (!email) {
+    if (fullname == null || fullname.trim() === "") {
+      setIsLoading(false)
+      setError("Full name is required")
+      return
+    }
+
+    if (email == null || email.trim() === "") {
       setIsLoading(false)
       setError("Email is required")
+      return
+    }
+
+    if (!emailRegex.test(email)) {
+      setIsLoading(false)
+      setError("Please enter a valid email address")
       return
     }
 
@@ -84,7 +97,7 @@ export function SignupForm({
   }
 
   return (
-    <form className={cn("flex flex-col gap-6", className)} onSubmit={handleSubmit} {...props}>
+    <form className={cn("flex flex-col gap-6", className)} onSubmit={handleSubmit} noValidate {...props}>
       <FieldGroup>
         <div className="flex flex-col items-center gap-1 text-center">
           <div className="fixed right-4 bottom-4 z-50">
@@ -135,7 +148,7 @@ export function SignupForm({
             disabled={isLoading}
           />
           <FieldDescription>
-            Must be at least 8 characters long.
+            Must be at least 6 characters long.
           </FieldDescription>
         </Field>
         <Field>

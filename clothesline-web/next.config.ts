@@ -24,6 +24,12 @@ const nextConfig: NextConfig = {
         hostname: "cdn.shadcnstudio.com",
         port: "",
         pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "storyset.com",
+        port: "",
+        pathname: "/**",
       }
     ],
   },

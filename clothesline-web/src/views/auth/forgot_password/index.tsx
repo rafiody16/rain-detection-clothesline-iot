@@ -1,11 +1,10 @@
 "use client"
 
-import { SignupForm } from "@/components/auth/signup-form"
+import { LoginForm } from "@/components/auth/login-form"
 import { GalleryVerticalEndIcon } from "lucide-react"
-// 1. Impor komponen ilustrasi kita
-import ClotheslineIllustration from "@/components/ui/clothes"
+import Image from "next/image"
 
-export default function ViewRegister() {
+export default function ViewForgotPassword() {
     return (
         <div className="grid min-h-svh lg:grid-cols-2">
             <div className="flex flex-col gap-4 p-6 md:p-10">
@@ -19,14 +18,17 @@ export default function ViewRegister() {
                 </div>
                 <div className="flex flex-1 items-center justify-center">
                     <div className="w-full max-w-xs">
-                        <SignupForm />
+                        <LoginForm />
                     </div>
                 </div>
             </div>
-
-            <div className="relative hidden min-h-svh bg-muted lg:flex items-center justify-center p-10">
-                <ClotheslineIllustration 
-                    className="w-full h-auto max-w-md object-contain" 
+            <div className="relative hidden min-h-svh bg-muted lg:block">
+                <Image
+                    src="https://placehold.net/600x400.png"
+                    alt="Image"
+                    fill
+                    sizes="(min-width: 1024px) 50vw, 100vw"
+                    className="absolute inset-0 h-full w-full object-cover dark:brightness-[0.2] dark:grayscale"
                 />
             </div>
         </div>
