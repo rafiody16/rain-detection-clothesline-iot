@@ -10,13 +10,13 @@ export interface StatusCardProps {
 export function StatusCard({ lastActionData, formatSmartTime }: StatusCardProps) {
   const isInside = lastActionData?.status; // true = MASUK, false = KELUAR
   return (
-    <Card className="rounded-2xl shadow-sm h-full">
+    <Card className="rounded-2xl shadow-sm">
       <CardHeader>
         <CardTitle className="text-lg font-bold">Clothesline Status</CardTitle>
         <CardDescription>Servo position</CardDescription>
       </CardHeader>
 
-      <CardContent className="flex flex-col items-center justify-between pb-8">
+      <CardContent className="flex flex-col items-center pb-8">
         <div className="relative flex items-center justify-center mt-4">
 
           <div className="relative flex items-center justify-center p-8 ">
@@ -58,7 +58,7 @@ export function StatusCard({ lastActionData, formatSmartTime }: StatusCardProps)
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4 w-full mt-12 pt-6 border-t border-zinc-100 dark:border-zinc-800">
+        <div className="grid grid-cols-2 gap-4 w-full mt-6 md:mt-12 pt-6 border-t border-zinc-100 dark:border-zinc-800">
           <div className="text-center">
             <p className="text-[10px] font-bold text-zinc-400 uppercase">
               System Mode
