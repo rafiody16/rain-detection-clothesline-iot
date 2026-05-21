@@ -101,9 +101,9 @@ export default function Dashboard() {
   };
   return (
     <>
-      <div className="flex flex-1 flex-col gap-4 p-4 md:p-8 pt-4">
+      <div className="flex flex-1 flex-col gap-4 p-3 md:p-8 pt-4">
         <Tabs defaultValue="overview" className="w-full">
-          <TabsList variant="line">
+          <TabsList variant="line" className="flex justify-start overflow-x-auto no-scrollbar">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="control">Servo Control</TabsTrigger>
             <TabsTrigger value="config">Configuration</TabsTrigger>
@@ -111,7 +111,7 @@ export default function Dashboard() {
 
           <TabsContent value="overview" className="space-y-6 animate-in fade-in-50">
             {/* 1. SENSOR STATS - Tetap 4 kolom di layar besar */}
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <div className="grid grid-cols-2 gap-3 md:gap-4 md:grid-cols-2 lg:grid-cols-4">
               {stats?.map((stat, i) => (
                 <StatCard
                   key={i}
@@ -125,10 +125,10 @@ export default function Dashboard() {
             </div>
 
             {/* 2. MAIN CHARTS & SERVO STATUS - Layout Grid Campuran */}
-            <div className="grid gap-6 lg:grid-cols-3">
+            <div className="grid gap-6 lg:grid-cols-3 lg:items-start">
 
               {/* Kolom Kiri & Tengah: Charts (Temperature & Humidity) */}
-              <div className="lg:col-span-2 space-y-6">
+              <div className="order-2 lg:order-1 lg:col-span-2 space-y-6">
                 <div className="grid gap-6 md:grid-cols-2">
                   <SensorChart
                     data={chartData}
@@ -155,7 +155,7 @@ export default function Dashboard() {
               </div>
 
               {/* Kolom Kanan: Servo Status & Control Summary */}
-              <div className="lg:col-span-1">
+              <div className="order-1 lg:order-2 lg:col-span-1">
                 <StatusCard
                   lastActionData={lastActionData}
                   formatSmartTime={formatSmartTime}
@@ -185,7 +185,7 @@ export default function Dashboard() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8">
                   <div className="space-y-6 bg-amber-50 dark:bg-amber-900/10 p-6 rounded-xl border border-amber-100 dark:border-amber-900/30">
                     <div className="flex items-center gap-2 mb-4">
                       <ThermometerSun className="w-5 h-5 text-amber-500" />
