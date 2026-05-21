@@ -1,8 +1,7 @@
-"use client";
+import { ReactElement } from "react";
 import AnalyticsPage from "@/views/dashboard/analytics";
 import DashboardLayout from "@/views/dashboard/layout";
 import { BarChart3, Droplets, RotateCcw } from "lucide-react";
-
 
 const Analytics = () => {
   const dataStats = [
@@ -43,15 +42,21 @@ const Analytics = () => {
       colorClass: "bg-purple-100 text-purple-600 dark:bg-purple-900/30",
     },
   ];
+
+  return <AnalyticsPage stats={dataStats} />;
+};
+
+Analytics.getLayout = function getLayout(page: ReactElement) {
   const breadcrumbs = [
     { label: "Dashboard", href: "/dashboard" },
     { label: "Analytics" },
   ];
+
   return (
     <DashboardLayout breadcrumbs={breadcrumbs}>
-      <AnalyticsPage stats={dataStats} />
+      {page}
     </DashboardLayout>
-  )
-}
+  );
+};
 
-export default Analytics
+export default Analytics;
