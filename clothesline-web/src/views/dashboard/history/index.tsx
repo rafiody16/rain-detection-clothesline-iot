@@ -159,7 +159,7 @@ export default function HistoryPage() {
                       <TableHead className="font-bold text-center">Timestamp</TableHead>
                       <TableHead className="font-bold text-center">Temperature</TableHead>
                       <TableHead className="font-bold text-center">Humidity</TableHead>
-                      <TableHead className="font-bold text-center">Light (Lux)</TableHead>
+                      <TableHead className="font-bold text-center">Light Level</TableHead>
                       <TableHead className="font-bold text-center">Rain Status</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -176,7 +176,7 @@ export default function HistoryPage() {
                             <TableCell className="px-6 py-4 font-medium text-center">{log.timestamp.includes(' ') ? log.timestamp.split(' ')[1] : log.timestamp}</TableCell>
                             <TableCell className="px-6 py-4 text-center">{log.temperature} °C</TableCell>
                             <TableCell className="px-6 py-4 text-center">{log.humidity} %</TableCell>
-                            <TableCell className="px-6 py-4 text-center">{log.light} lux</TableCell>
+                            <TableCell className="px-6 py-4 text-center">{log.light}</TableCell>
                             <TableCell className="px-6 py-4 text-center">
                               {log.rain ? (
                                 <Badge variant={"outline"} className="text-blue-500 font-medium">
@@ -236,7 +236,7 @@ export default function HistoryPage() {
                           </div>
                           <div className="flex flex-col min-w-10">
                             <span className="text-sm font-medium">{log.light}</span>
-                            <span className="text-[9px] text-muted-foreground uppercase">Lux</span>
+                            <span className="text-[9px] text-muted-foreground uppercase">Light</span>
                           </div>
                         </div>
                       </div>

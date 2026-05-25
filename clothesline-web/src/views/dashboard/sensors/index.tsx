@@ -1,9 +1,43 @@
 "use client"
 
+import { useDevice } from "@/contexts/device-context"
+import { useMqtt } from "@/contexts/mqtt-context"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Activity } from "lucide-react"
+import { SwitchBadge } from "@/components/ui/switch-badge"
+
+const sensorItems = [
+  {
+    id: "dht11",
+    title: "DHT11",
+    description: "Temperature & Humidity",
+    details:
+      "Measures ambient temperature and humidity to help decide when the clothesline should move in or out.",
+    pin: "GPIO 25",
+  },
+  {
+    id: "ldr",
+    title: "LDR (Photoresistor)",
+    description: "Light Intensity",
+    details:
+      "Detects ambient light level. The system uses this to decide whether it is getting too dark for drying clothes outside.",
+    pin: "ADC 34",
+  },
+  {
+    id: "rain",
+    title: "Rain Sensor",
+    description: "Water Detection",
+    details:
+      "Reads the rain module output so the clothesline can retract as soon as precipitation is detected.",
+    pin: "ADC 35",
+  },
+] as const
 
 export default function SensorsPage() {
+  const { activeDevice } = useDevice()
+  const { isOnline } = useMqtt()
+  const deviceStatus = !activeDevice ? "none" : isOnline ? "online" : "offline"
+
   return (
     <>
 
@@ -18,39 +52,33 @@ export default function SensorsPage() {
             </div>
           </div>
 
+          <div className="flex items-center justify-between rounded-xl border bg-card px-4 py-3 shadow-sm">
+            <div>
+              <p className="text-sm font-medium text-foreground">ESP32 device status</p>
+              <p className="text-sm text-muted-foreground">
+                {activeDevice ? `Device ${activeDevice.deviceId} is being monitored through MQTT.` : "Select a device to see live sensor status."}
+              </p>
+            </div>
+            <SwitchBadge status={deviceStatus} />
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>DHT22</CardTitle>
-                <CardDescription>Temperature & Humidity</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">Measures ambient temperature and humidity accurately. Used to determine if the weather is warm and dry enough to push the clothesline out.</p>
-                <div className="mt-4 p-4 rounded-lg bg-muted text-sm font-mono text-zinc-500">Pin: GPIO 4<br/>Status: ONLINE</div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>LDR (Photoresistor)</CardTitle>
-                <CardDescription>Light Intensity</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">Detects sunlight presence. If it gets too dark, the clothesline will automatically retract to prevent laundry from getting damp from dew.</p>
-                <div className="mt-4 p-4 rounded-lg bg-muted text-sm font-mono text-zinc-500">Pin: ADC 34<br/>Status: ONLINE</div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Rain Sensor</CardTitle>
-                <CardDescription>Water Detection</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">An analog rain drop detector. Reacts instantly to precipitation and acts as the highest priority trigger to retract the laundry.</p>
-                <div className="mt-4 p-4 rounded-lg bg-muted text-sm font-mono text-zinc-500">Pin: ADC 35<br/>Status: ONLINE</div>
-              </CardContent>
-            </Card>
+            {sensorItems.map((sensor) => (
+              <Card key={sensor.id} id={sensor.id}>
+                <CardHeader>
+                  <CardTitle>{sensor.title}</CardTitle>
+                  <CardDescription>{sensor.description}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground">{sensor.details}</p>
+                  <div className="mt-4 rounded-lg bg-muted p-4 text-sm font-mono text-zinc-500">
+                    Pin: {sensor.pin}
+                    <br />
+                    Status: {activeDevice ? (isOnline ? "ONLINE" : "OFFLINE") : "NO DEVICE"}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
           </div>
         </div>
         </>

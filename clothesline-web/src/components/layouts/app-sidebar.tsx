@@ -13,7 +13,6 @@ import {
 } from "lucide-react"
 
 import { NavMain } from "@/components/layouts/nav-main"
-import { NavProjects } from "@/components/layouts/nav-projects"
 import { NavUser } from "@/components/layouts/nav-user"
 import { TeamSwitcher } from "@/components/provider/team-switcher"
 import {
@@ -71,25 +70,6 @@ const data = {
       ],
     },
     {
-      title: "Sensors",
-      url: "/dashboard/sensors",
-      icon: Activity,
-      items: [
-        {
-          title: "DHT22 (Temp & Humidity)",
-          url: "/dashboard/sensors#dht22",
-        },
-        {
-          title: "LDR (Light)",
-          url: "/dashboard/sensors#ldr",
-        },
-        {
-          title: "Rain Sensor",
-          url: "/dashboard/sensors#rain",
-        }
-      ],
-    },
-    {
       title: "Configuration",
       url: "/dashboard/settings",
       icon: Settings2,
@@ -104,15 +84,18 @@ const data = {
         }
       ],
     },
-  ],
-  projects: [
     {
-      name: "System Logs",
+      title: "Sensors",
+      url: "/dashboard/sensors",
+      icon: Activity,
+    },
+    {
+      title: "System Logs",
       url: "/dashboard/logs/system",
       icon: Settings,
     },
     {
-      name: "Analytics",
+      title: "Analytics",
       url: "/dashboard/analytics",
       icon: BarChart3,
     },
@@ -135,7 +118,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} />
-        <NavProjects projects={data.projects} />
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={user} />
