@@ -39,6 +39,12 @@ export function LoginForm({
       callbackUrl,
     })
 
+    if (!email || !password) {
+      setIsLoading(false)
+      setError("Email and password are required")
+      return
+    }
+
     if (res?.ok) {
       push(callbackUrl)
     } else {
@@ -58,7 +64,7 @@ export function LoginForm({
   return (
     <form
       className={cn("flex flex-col gap-6", className)}
-      onSubmit={handleSubmit}
+      onSubmit={handleSubmit} noValidate
       {...props}
     >
       <FieldGroup>
@@ -87,12 +93,12 @@ export function LoginForm({
         <Field>
           <div className="flex items-center">
             <FieldLabel htmlFor="password">Password</FieldLabel>
-            <a
-              href="#"
+            <Link
+              href="/auth/forgot_password"
               className="ml-auto text-sm underline-offset-4 hover:underline"
             >
               Forgot your password?
-            </a>
+            </Link>
           </div>
           <Input
             id="password"

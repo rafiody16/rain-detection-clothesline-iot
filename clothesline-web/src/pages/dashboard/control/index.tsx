@@ -1,10 +1,12 @@
-"use client";
-
+import { ReactElement } from "react";
 import ControlPage from "@/views/dashboard/control";
 import DashboardLayout from "@/views/dashboard/layout";
 
-export default function Control() {
+const Control = () => {
+  return <ControlPage />;
+};
 
+Control.getLayout = function getLayout(page: ReactElement) {
   const breadcrumbs = [
     { label: "Dashboard", href: "/dashboard" },
     { label: "Control Panel" },
@@ -12,7 +14,9 @@ export default function Control() {
 
   return (
     <DashboardLayout breadcrumbs={breadcrumbs}>
-      <ControlPage/>
+      {page}
     </DashboardLayout>
   );
-}
+};
+
+export default Control;

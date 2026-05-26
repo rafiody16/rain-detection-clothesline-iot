@@ -1,15 +1,17 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
-import { Activity, Settings2, History, Play, Square, Check, Loader2, WifiOff, XCircle, Timer } from "lucide-react"
+import { Activity, Settings2, History, Play, Square, Loader2, WifiOff, XCircle, Timer } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { useMqtt } from "@/contexts/mqtt-context"
 import { toast } from "sonner"
+import { useDevice } from "@/contexts/device-context"
 
 export function ServoControl() {
   const { lastActionData, sendCommand, isOnline } = useMqtt();
+  const { isLoading } = useDevice();
   const [isMoving, setIsMoving] = useState(false);
 
   // --- STATE TIMER & INPUT ---
@@ -86,7 +88,7 @@ export function ServoControl() {
   return (
     <div className="space-y-6">
       {/* Offline Banner */}
-      {!isOnline && (
+      {!isOnline && !isLoading && (
         <div className="flex items-center gap-3 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl border border-red-200 dark:border-red-800 animate-in fade-in-50">
           <WifiOff className="w-5 h-5 text-red-500 shrink-0" />
           <div className="text-xs">

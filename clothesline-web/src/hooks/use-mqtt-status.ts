@@ -61,7 +61,11 @@ export function useMqttStatus(deviceId: string | null) {
 
       // Logika Topik Status
       if (topic === topicStatus) {
-        setIsOnline(msgStr.includes("Online"));
+        if (msgStr.includes("Offline")) {
+          setIsOnline(false);
+        } else if (msgStr.includes("Online")) {
+          setIsOnline(true);
+        }
       }
 
       // Logika Topik Data

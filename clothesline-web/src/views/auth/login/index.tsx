@@ -2,7 +2,8 @@
 
 import { LoginForm } from "@/components/auth/login-form"
 import { GalleryVerticalEndIcon } from "lucide-react"
-import Image from "next/image"
+// 1. Impor komponen ilustrasi kita
+import ClotheslineIllustration from "@/components/ui/clothes"
 
 export default function ViewLogin() {
     return (
@@ -13,7 +14,7 @@ export default function ViewLogin() {
                         <div className="flex size-6 items-center justify-center rounded-md bg-primary text-primary-foreground">
                             <GalleryVerticalEndIcon className="size-4" />
                         </div>
-                        4ur Inc.
+                        Smart Clothesline
                     </a>
                 </div>
                 <div className="flex flex-1 items-center justify-center">
@@ -22,15 +23,11 @@ export default function ViewLogin() {
                     </div>
                 </div>
             </div>
-            <div className="relative hidden bg-muted lg:block">
-                <div className="relative hidden bg-muted lg:block">
-                    <Image
-                        src="https://placehold.net/600x400.png"
-                        alt="Image"
-                        fill
-                        className="absolute inset-0 h-full w-full object-cover dark:brightness-[0.2] dark:grayscale"
-                    />
-                </div>
+
+            <div className="relative hidden min-h-svh bg-muted lg:flex items-center justify-center p-10">
+                <ClotheslineIllustration 
+                    className="w-full h-auto max-w-md object-contain" 
+                />
             </div>
         </div>
     )
