@@ -22,6 +22,7 @@ import {
   SidebarHeader,
   SidebarRail,
 } from "@/components/ui/sidebar"
+import SidebarToggle from "../provider/sidebar-toggle"
 
 // IoT Project Data
 const data = {
@@ -114,6 +115,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
+        <SidebarToggle />
         <TeamSwitcher />
       </SidebarHeader>
       <SidebarContent>

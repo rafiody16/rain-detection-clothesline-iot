@@ -35,10 +35,10 @@ export function DashboardHeader({ breadcrumbs }: DashboardHeaderProps) {
             <div className="flex items-center justify-between w-full px-4">
                 {/* LEFT SIDE: Sidebar & Breadcrumbs */}
                 <div className="flex items-center gap-2">
-                    <SidebarTrigger className="-ml-1" />
+                    <SidebarTrigger className="-ml-1 md:hidden" />
                     <Separator
                         orientation="vertical"
-                        className="mr-2 data-[orientation=vertical]:h-4"
+                        className="mr-2 data-[orientation=vertical]:h-4 md:hidden"
                     />
                     <Breadcrumb>
                         <BreadcrumbList>

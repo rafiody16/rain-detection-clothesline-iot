@@ -86,9 +86,10 @@ export function TeamSwitcher() {
           <DropdownMenuTrigger asChild>
             <SidebarMenuButton
               size="lg"
-              className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+              tooltip="Devices"
+              className="data-[state=open]:bg-sidebar-accent cursor-pointer data-[state=open]:text-sidebar-accent-foreground group-data-[collapsible=icon]:hover:bg-transparent group-data-[collapsible=icon]:data-[state=open]:bg-transparent"
             >
-              <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
+              <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground transition-colors group-data-[collapsible=icon]:group-hover/menu-button:bg-sidebar-accent group-data-[collapsible=icon]:group-hover/menu-button:text-sidebar-accent-foreground group-data-[collapsible=icon]:group-hover/menu-button:rounded-md">
                 <Cpu className="size-4" />
               </div>
               <div className="grid flex-1 text-left text-sm leading-tight">
@@ -131,12 +132,12 @@ export function TeamSwitcher() {
                   </div>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
-                    <div
-                      className={
-                        "w-2 h-2 rounded-full " +
-                        (globalOnlineMap[device.deviceId] ? "bg-green-500" : "bg-gray-400")
-                      }
-                    />
+                  <div
+                    className={
+                      "w-2 h-2 rounded-full " +
+                      (globalOnlineMap[device.deviceId] ? "bg-green-500" : "bg-gray-400")
+                    }
+                  />
                   <div
                     onClick={(e) => {
                       e.preventDefault();
