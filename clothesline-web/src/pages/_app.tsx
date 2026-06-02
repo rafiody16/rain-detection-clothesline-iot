@@ -9,6 +9,19 @@ import { MqttProvider } from "@/contexts/mqtt-context";
 import { FirebaseProvider } from "@/contexts/firebase-context";
 import { DeviceProvider } from "@/contexts/device-context";
 
+import { 
+  Inter, JetBrains_Mono, Poppins, Fira_Code, 
+  Montserrat, DM_Sans, Space_Mono 
+} from "next/font/google";
+
+const fontInter = Inter({ subsets: ["latin"], display: 'swap' });
+const fontJetBrainsMono = JetBrains_Mono({ subsets: ["latin"], display: 'swap' });
+const fontPoppins = Poppins({ subsets: ["latin"], weight: ["400", "500", "600", "700"], display: 'swap' });
+const fontFiraCode = Fira_Code({ subsets: ["latin"], display: 'swap' });
+const fontMontserrat = Montserrat({ subsets: ["latin"], display: 'swap' });
+const fontDMSans = DM_Sans({ subsets: ["latin"], display: 'swap' });
+const fontSpaceMono = Space_Mono({ subsets: ["latin"], weight: ["400", "700"], display: 'swap' });
+
 type AppPropsWithLayout = AppProps & {
   Component: any;
 };
@@ -31,7 +44,19 @@ export default function App({
   // PERBAIKAN 3 & 4: Struktur JSX dan Hierarki Provider
   // SessionProvider wajib berada di atas DeviceProvider
   return (
-    <SessionProvider session={session}>
+    <>
+      <style jsx global>{`
+        :root {
+          --font-inter: ${fontInter.style.fontFamily};
+          --font-jetbrains-mono: ${fontJetBrainsMono.style.fontFamily};
+          --font-poppins: ${fontPoppins.style.fontFamily};
+          --font-fira-code: ${fontFiraCode.style.fontFamily};
+          --font-montserrat: ${fontMontserrat.style.fontFamily};
+          --font-dm-sans: ${fontDMSans.style.fontFamily};
+          --font-space-mono: ${fontSpaceMono.style.fontFamily};
+        }
+      `}</style>
+      <SessionProvider session={session}>
       <ColorThemeProvider>
         <ThemeProvider attribute="class">
           <TooltipProvider>
@@ -53,6 +78,7 @@ export default function App({
           </TooltipProvider>
         </ThemeProvider>
       </ColorThemeProvider>
-    </SessionProvider>
+      </SessionProvider>
+    </>
   );
 }
