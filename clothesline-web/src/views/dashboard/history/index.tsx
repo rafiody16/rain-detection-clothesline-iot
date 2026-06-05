@@ -46,7 +46,8 @@ export default function HistoryPage() {
             humidity: item.lembab,
             light: item.ldr,
             rain: item.status,
-        }));
+            kondisi: item.kondisi || (item.status ? "Hujan" : "Cerah"),
+        })); 
     }, [historyData]);
 
   const processedLogs = useMemo(() => {
@@ -160,6 +161,7 @@ export default function HistoryPage() {
                       <TableHead className="font-bold text-center">Temperature</TableHead>
                       <TableHead className="font-bold text-center">Humidity</TableHead>
                       <TableHead className="font-bold text-center">Light Level</TableHead>
+                      <TableHead className="font-bold text-center">Weather Condition</TableHead>
                       <TableHead className="font-bold text-center">Rain Status</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -177,6 +179,11 @@ export default function HistoryPage() {
                             <TableCell className="px-6 py-4 text-center">{log.temperature} °C</TableCell>
                             <TableCell className="px-6 py-4 text-center">{log.humidity} %</TableCell>
                             <TableCell className="px-6 py-4 text-center">{log.light}</TableCell>
+                            <TableCell className="px-6 py-4 text-center">
+                              <Badge variant="outline" className="font-medium px-2.5 py-1">
+                                {log.kondisi}
+                              </Badge>
+                            </TableCell>
                             <TableCell className="px-6 py-4 text-center">
                               {log.rain ? (
                                 <Badge variant={"outline"} className="text-blue-500 font-medium">
