@@ -21,6 +21,10 @@ import {
 } from "@/components/ui/select";
 import {
   CloudRain,
+  Cloud,
+  CloudFog,
+  Moon,
+  CloudDrizzle,
   Sun,
   ThermometerSun,
   Wind,
@@ -32,8 +36,59 @@ import { formatNum } from "@/lib/format-number";
 import { StatCard } from "@/components/custom/stat-card";
 import { StatusCard } from "@/components/custom/servo-status-card";
 
+// Fungsi untuk mendapatkan konfigurasi ikon, warna, dan label cuaca
+const getWeatherConfig = (kondisi: string) => {
+  switch (kondisi) {
+    case "Cerah Terik":
+      return { 
+        icon: Sun, 
+        color: "text-yellow-500 bg-yellow-100 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-900/50", 
+        label: "Cerah Terik" 
+      };
+    case "Berawan":
+      return { 
+        icon: Cloud, 
+        color: "text-slate-400 bg-slate-100 dark:bg-slate-800/20 border-slate-200 dark:border-slate-800/50", 
+        label: "Berawan Sebagian" 
+      };
+    case "Mendung":
+      return { 
+        icon: CloudFog, 
+        color: "text-amber-600 bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-900/50", 
+        label: "Mendung (Antisipasi)" 
+      };
+    case "Malam/Gelap":
+      return { 
+        icon: Moon, 
+        color: "text-indigo-400 bg-indigo-50 dark:bg-indigo-950/20 border-indigo-200 dark:border-indigo-900/50", 
+        label: "Malam / Gelap" 
+      };
+    case "Gerimis":
+      return { 
+        icon: CloudDrizzle, 
+        color: "text-sky-500 bg-sky-50 dark:bg-sky-950/20 border-sky-200 dark:border-sky-900/50", 
+        label: "Gerimis" 
+      };
+    case "Hujan Deras":
+      return { 
+        icon: CloudRain, 
+        color: "text-blue-600 bg-blue-100 dark:bg-blue-900/30 border-blue-200 dark:border-blue-900/60 animate-pulse", 
+        label: "Hujan Deras" 
+      };
+    default:
+      return { 
+        icon: Sun, 
+        color: "text-muted-foreground bg-muted border-transparent", 
+        label: "Mendeteksi..." 
+      };
+  }
+};
+
 export default function Dashboard() {
   const { latestData, rawHistory: chartData, isOnline, lastActionData } = useMqtt();
+  const kondisiCuaca = latestData?.kondisi || "Mendeteksi...";
+  const weather = getWeatherConfig(kondisiCuaca);
+  const WeatherIcon = weather.icon;
 
   const stats = [
     {
@@ -55,7 +110,7 @@ export default function Dashboard() {
       value: formatNum(latestData?.ldr, 0) ? `${formatNum(latestData?.ldr, 0)} lux` : "—",
       icon: <Sun className="h-4 w-4 text-yellow-500" />,
       color: "bg-yellow-500/10",
-      desc: Number(latestData?.ldr) > 1600 ? "Dark" : "Normal"
+      desc: Number(latestData?.ldr) > 2000 ? "Dark" : "Normal"
     },
     {
       id: `rain-${latestData?.intensitasAir}`,
@@ -123,6 +178,25 @@ export default function Dashboard() {
                 />
               ))}
             </div>
+
+            <Card className={`border ${weather.color} transition-all duration-300`}>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between space-y-0 pb-2">
+                  <span className="text-sm font-medium uppercase tracking-wider opacity-80">
+                    Kondisi Lingkungan
+                  </span>
+                  <WeatherIcon className="h-6 w-6" />
+                </div>
+                <div className="mt-2">
+                  <h2 className="text-2xl font-bold tracking-tight">
+                    {weather.label}
+                  </h2>
+                  <p className="text-xs opacity-70 mt-1">
+                    {kondisiCuaca === "Mendung" ? "Jemuran otomatis ditarik masuk" : "Sistem berjalan normal"}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
 
             {/* 2. MAIN CHARTS & SERVO STATUS - Layout Grid Campuran */}
             <div className="grid gap-6 lg:grid-cols-3 lg:items-start">

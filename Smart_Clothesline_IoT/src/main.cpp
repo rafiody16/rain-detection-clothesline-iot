@@ -1,4 +1,4 @@
-#include <Arduino.h> // Wajib ada di PlatformIO
+#include <Arduino.h>
 #include <ESP32Servo.h>
 #include <DHT.h>
 #include <WiFi.h>
@@ -27,8 +27,23 @@ Servo servoJemuran;
 
 const float BATAS_LEMBAB = 80.0;
 const float BATAS_SUHU = 25.0;
-const int BATAS_GELAP = 2500;
-const int BATAS_HUJAN = 3600;
+
+// =====================
+// RENTANG SENSOR CAHAYA (Makin kecil = Terang)
+// =====================
+const int LDR_TERIK   = 800;   // 0 - 800: Cerah Terik
+const int LDR_BERAWAN = 1800;  // 801 - 1800: Berawan Sebagian
+const int LDR_MENDUNG = 2800;  // 1801 - 2800: Mendung Gelap
+// > 2800: Malam / Sangat Gelap
+// const int BATAS_GELAP = 2500;
+
+// =====================
+// RENTANG SENSOR HUJAN (Makin kecil = Basah)
+// =====================
+const int HUJAN_KERING  = 3800;  // > 3800: Tidak ada air
+const int HUJAN_GERIMIS = 2500;  // 2500 - 3800: Ada tetesan (Gerimis)
+// < 2500: Hujan Deras
+// const int BATAS_HUJAN = 3600;
 
 // =====================
 // KONFIGURASI SERVO 360
@@ -323,9 +338,29 @@ void loop()
     int nilaiLDR = bacaSensorStabil(LDR_PIN);
     int intensitasAir = bacaSensorStabil(RAIN_ANALOG);
 
-    bool gelap = (nilaiLDR > BATAS_GELAP);
-    bool sedangHujan = (intensitasAir < BATAS_HUJAN);
-    bool cuacaBuruk = sedangHujan || gelap || (lembab > BATAS_LEMBAB) || (suhu < BATAS_SUHU);
+    // bool gelap = (nilaiLDR > BATAS_GELAP);
+    // bool sedangHujan = (intensitasAir < BATAS_HUJAN);
+    // bool cuacaBuruk = sedangHujan || gelap || (lembab > BATAS_LEMBAB) || (suhu < BATAS_SUHU);
+
+    // --- LOGIKA PENENTUAN STATUS CUACA ---
+    String kondisiCuaca = "Tidak Diketahui";
+
+    if (intensitasAir < HUJAN_GERIMIS) {
+        kondisiCuaca = "Hujan Deras";
+    } else if (intensitasAir < HUJAN_KERING) {
+        kondisiCuaca = "Gerimis";
+    } else if (nilaiLDR > LDR_MENDUNG) {
+        kondisiCuaca = "Malam/Gelap";
+    } else if (nilaiLDR > LDR_BERAWAN) {
+        kondisiCuaca = "Mendung";
+    } else if (nilaiLDR > LDR_TERIK) {
+        kondisiCuaca = "Berawan";
+    } else {
+        kondisiCuaca = "Cerah Terik";
+    }
+
+    // Jemuran masuk JIKA Gerimis, Mendung, Hujan Deras, Malam, atau Mendung
+    bool cuacaBuruk = (intensitasAir < HUJAN_GERIMIS) || (intensitasAir < HUJAN_KERING) || (nilaiLDR > LDR_MENDUNG) || (nilaiLDR > LDR_BERAWAN) || (lembab > BATAS_LEMBAB) || (suhu < BATAS_SUHU);
 
     // Hitung sisa timer (jika aktif)
     long sisaTimerDetik = 0;
@@ -334,10 +369,12 @@ void loop()
       if (sisaTimerDetik < 0) sisaTimerDetik = 0;
     }
 
-    char msg[350]; // Perbesar buffer untuk menampung JSON timer
+    // --- KIRIM DATA KE MQTT ---
+    char msg[400]; // Buffer diperbesar untuk menampung field 'kondisi'
     snprintf(msg, sizeof(msg),
-             "{\"suhu\":%.1f,\"lembab\":%.1f,\"ldr\":%d,\"intensitasAir\":%d,\"cuacaBuruk\":%d,\"mode\":\"%s\",\"statusDiLuar\":%d,\"deviceId\":\"%s\",\"timerAktif\":%d,\"timerAksi\":\"%s\",\"sisaTimer\":%ld}",
-             suhu, lembab, nilaiLDR, intensitasAir, cuacaBuruk ? 1 : 0, modeAuto ? "AUTO" : "MANUAL", statusDiLuar ? 1 : 0, deviceId.c_str(), timerAktif ? 1 : 0, aksiTimer.c_str(), sisaTimerDetik);
+             "{\"suhu\":%.1f,\"lembab\":%.1f,\"ldr\":%d,\"intensitasAir\":%d,\"cuacaBuruk\":%d,\"mode\":\"%s\",\"statusDiLuar\":%d,\"deviceId\":\"%s\",\"timerAktif\":%d,\"timerAksi\":\"%s\",\"sisaTimer\":%ld,\"kondisi\":\"%s\"}",
+             suhu, lembab, nilaiLDR, intensitasAir, cuacaBuruk ? 1 : 0, modeAuto ? "AUTO" : "MANUAL", statusDiLuar ? 1 : 0, deviceId.c_str(), timerAktif ? 1 : 0, aksiTimer.c_str(), sisaTimerDetik, kondisiCuaca.c_str());
+    
     client.publish(topicData.c_str(), msg);
 
     // === 3. LOGIKA AUTO ===

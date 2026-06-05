@@ -10,6 +10,7 @@ export interface IoTData {
     intensitasAir: number;
     mode: string;
     status: boolean;
+    kondisi: string;
 }
 
 export const normalizeIoTData = (item: any): IoTData => {
@@ -37,5 +38,6 @@ export const normalizeIoTData = (item: any): IoTData => {
         status: item.statusDiLuar !== undefined
             ? item.statusDiLuar === 0
             : item.cuacaBuruk === 1,
+        kondisi: item.kondisi ?? "Mendeteksi...",
     };
 };
