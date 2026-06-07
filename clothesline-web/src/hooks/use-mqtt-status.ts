@@ -4,12 +4,14 @@ import { connectMQTT } from "@/utils/mqtt";
 import { CommandPayload, IoTData, normalizeIoTData } from "@/utils/iot-data";
 import { useState, useEffect, useRef } from "react";
 import { useFirebase } from "@/contexts/firebase-context";
+import { MqttClient } from "mqtt";
 
 export function useMqttStatus(deviceId: string | null) {
   const [isOnline, setIsOnline] = useState<boolean>(false);
   const [latestData, setLatestData] = useState<IoTData | null>(null);
   const [rawHistory, setRawHistory] = useState<IoTData[]>([]);
   const [lastActionData, setLastActionData] = useState<IoTData | null>(null);
+  const [client, setClient] = useState<MqttClient | null>(null);
 
   const mqttClientRef = useRef<any>(null);
   const { historyData, isLoading } = useFirebase();
@@ -92,12 +94,14 @@ export function useMqttStatus(deviceId: string | null) {
     });
 
     mqttClientRef.current = client;
+    setClient(client);
 
     return () => {
       clearTimeout(timeoutId);
       clearInterval(heartbeatCheck);
       client?.end(true);
       mqttClientRef.current = null;
+      setClient(null);
     };
   }, [deviceId]);
 
@@ -157,5 +161,5 @@ export function useMqttStatus(deviceId: string | null) {
     });
   };
 
-  return { isOnline, latestData, rawHistory, lastActionData, sendCommand, pingDevice };
+  return { isOnline, latestData, rawHistory, lastActionData, sendCommand, pingDevice, client };
 }

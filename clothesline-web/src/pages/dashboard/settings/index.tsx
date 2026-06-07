@@ -1,6 +1,6 @@
 import { ReactElement } from "react";
 import DashboardLayout from "@/views/dashboard/layout";
-import SettingsPage from "@/pages/dashboard/settings";
+import SettingsPage from "@/views/dashboard/settings";
 
 const Settings = () => {
   return <SettingsPage />;

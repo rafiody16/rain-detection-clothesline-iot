@@ -59,31 +59,11 @@ const data = {
       title: "Control Panel",
       url: "/dashboard/control",
       icon: PlayCircle,
-      items: [
-        {
-          title: "Servo Mode",
-          url: "/dashboard/control",
-        },
-        {
-          title: "Timer Schedule",
-          url: "/dashboard/control#timer",
-        }
-      ],
     },
     {
       title: "Configuration",
       url: "/dashboard/settings",
       icon: Settings2,
-      items: [
-        {
-          title: "Thresholds",
-          url: "/dashboard/settings",
-        },
-        {
-          title: "System Alerts",
-          url: "/dashboard/settings#alerts",
-        }
-      ],
     },
     {
       title: "Sensors",

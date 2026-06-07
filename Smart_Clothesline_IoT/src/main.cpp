@@ -1,3 +1,4 @@
+#include <ArduinoJson.h>
 #include <Arduino.h>
 #include <ESP32Servo.h>
 #include <DHT.h>
@@ -25,23 +26,23 @@ Servo servoJemuran;
 #define LDR_PIN 34
 #define RAIN_ANALOG 35
 
-const float BATAS_LEMBAB = 80.0;
-const float BATAS_SUHU = 25.0;
+float BATAS_LEMBAB = 80.0;
+float BATAS_SUHU = 25.0;
 
 // =====================
 // RENTANG SENSOR CAHAYA (Makin kecil = Terang)
 // =====================
-const int LDR_TERIK   = 800;   // 0 - 800: Cerah Terik
-const int LDR_BERAWAN = 1800;  // 801 - 1800: Berawan Sebagian
-const int LDR_MENDUNG = 2800;  // 1801 - 2800: Mendung Gelap
+int LDR_TERIK   = 800;   // 0 - 800: Cerah Terik
+int LDR_BERAWAN = 1800;  // 801 - 1800: Berawan Sebagian
+int LDR_MENDUNG = 2800;  // 1801 - 2800: Mendung Gelap
 // > 2800: Malam / Sangat Gelap
 // const int BATAS_GELAP = 2500;
 
 // =====================
 // RENTANG SENSOR HUJAN (Makin kecil = Basah)
 // =====================
-const int HUJAN_KERING  = 3800;  // > 3800: Tidak ada air
-const int HUJAN_GERIMIS = 2500;  // 2500 - 3800: Ada tetesan (Gerimis)
+int HUJAN_KERING  = 3800;  // > 3800: Tidak ada air
+int HUJAN_GERIMIS = 2500;  // 2500 - 3800: Ada tetesan (Gerimis)
 // < 2500: Hujan Deras
 // const int BATAS_HUJAN = 3600;
 
@@ -82,6 +83,7 @@ String topicStatus;
 String topicKontrol;
 String topicPair;
 String topicWifiReset;
+String topicConfig;
 
 // Deklarasi Fungsi
 void setLeds(bool dalam, bool proses, bool luar);
@@ -103,6 +105,7 @@ void setupTopics()
   topicKontrol = "jemuran/" + deviceId + "/kontrol";
   topicPair = "jemuran/" + deviceId + "/pair";
   topicWifiReset = "jemuran/" + deviceId + "/wifi-reset";
+  topicConfig = "jemuran/" + deviceId + "/config";
 }
 
 // Fungsi eksekusi pergerakan (agar tidak ngulang kode)
@@ -142,6 +145,36 @@ void callback(char *topic, byte *payload, unsigned int length)
 
   String topicStr = String(topic);
   Serial.println("Pesan Web masuk [" + topicStr + "]: " + pesan);
+
+  // Logika Handle Konfigurasi Threshold
+  if (topicStr == topicConfig) {
+    StaticJsonDocument<512> doc;
+    DeserializationError error = deserializeJson(doc, pesan);
+
+    if (!error) {
+      // Konfigurasi DHT
+      if (doc.containsKey("batasSuhu")) batasSuhu = doc["batasSuhu"];
+      if (doc.containsKey("batasLembab")) batasLembab = doc["batasLembab"];
+
+      // Konfigurasi Multi-level LDR
+      if (doc.containsKey("ldrTerik")) LDR_TERIK = doc["ldrTerik"];
+      if (doc.containsKey("ldrBerawan")) LDR_BERAWAN = doc["ldrBerawan"];
+      if (doc.containsKey("ldrMendung")) LDR_MENDUNG = doc["ldrMendung"];
+
+      // Konfigurasi Multi-level Hujan
+      if (doc.containsKey("hujanKering")) HUJAN_KERING = doc["hujanKering"];
+      if (doc.containsKey("hujanGerimis")) HUJAN_GERIMIS = doc["hujanGerimis"];
+
+      Serial.println("==========================================");
+      Serial.println(" Threshold Tingkatan Cuaca Berhasil Diubah Real-Time!");
+      Serial.printf(" LDR: Terik<%d, Berawan<%d, Mendung<%d\n", LDR_TERIK, LDR_BERAWAN, LDR_MENDUNG);
+      Serial.printf(" Hujan: Kering>%d, Gerimis>%d\n", HUJAN_KERING, HUJAN_GERIMIS);
+      Serial.println("==========================================");
+    } else {
+      Serial.print("Gagal parsing JSON Config: ");
+      Serial.println(error.c_str());
+    }
+  }
 
   if (topicStr == topicKontrol)
   {
@@ -250,6 +283,7 @@ void reconnectMQTT()
       client.subscribe(topicKontrol.c_str());
       client.subscribe(topicPair.c_str());
       client.subscribe(topicWifiReset.c_str());
+      client.subscribe(topicConfig.c_str());
     }
     else
     {
