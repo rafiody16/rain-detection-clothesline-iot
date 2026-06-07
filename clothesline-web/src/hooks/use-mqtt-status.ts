@@ -4,6 +4,7 @@ import { connectMQTT } from "@/utils/mqtt";
 import { CommandPayload, IoTData, normalizeIoTData } from "@/utils/iot-data";
 import { useState, useEffect, useRef } from "react";
 import { useFirebase } from "@/contexts/firebase-context";
+import { MqttClient } from "mqtt";
 
 export function useMqttStatus(deviceId: string | null) {
   const [isOnline, setIsOnline] = useState<boolean>(false);
@@ -13,6 +14,7 @@ export function useMqttStatus(deviceId: string | null) {
 
   const mqttClientRef = useRef<any>(null);
   const { historyData, isLoading } = useFirebase();
+  const topicConfig = `jemuran/${deviceId}/config`;
 
   useEffect(() => {
     if (!isLoading && historyData.length > 0 && lastActionData === null) {
@@ -106,9 +108,10 @@ export function useMqttStatus(deviceId: string | null) {
       console.error("MQTT not connected or no device selected");
       return;
     }
-    const topic = `jemuran/${deviceId}/kontrol`;
-    mqttClientRef.current.publish(topic, payload);
-    console.log(`Command sent to ${topic}: ${payload}`);
+    // Convert payload to string if it's an object
+    const messageToSend = typeof payload === 'string' ? payload : JSON.stringify(payload);
+    mqttClientRef.current.publish(topicConfig, messageToSend);
+    console.log(`Command sent to ${topicConfig}: ${messageToSend}`);
   };
 
   const pingDevice = (targetDeviceId: string): Promise<boolean> => {

@@ -1,4 +1,18 @@
-export type CommandPayload = "AUTO" | "MANUAL" | "TIMER" | "MASUK" | "KELUAR";
+export type CommandPayload = 
+  | "AUTO" 
+  | "MANUAL" 
+  | "TIMER" 
+  | "MASUK" 
+  | "KELUAR"
+  | {
+      batasSuhu: number;
+      batasLembab: number;
+      ldrTerik: number;
+      ldrBerawan: number;
+      ldrMendung: number;
+      hujanKering: number;
+      hujanGerimis: number;
+    };
 
 export interface IoTData {
     timestamp: string;

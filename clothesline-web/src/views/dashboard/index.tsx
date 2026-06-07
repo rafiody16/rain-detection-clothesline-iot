@@ -30,6 +30,7 @@ import {
   Wind,
 } from "lucide-react";
 import { ServoControl } from "@/components/custom/servo-control";
+import { ConfigurationThreshold } from "@/components/custom/config-threshold";
 import { SensorChart } from "@/components/custom/sensor-chart";
 import { useMqtt } from "@/contexts/mqtt-context";
 import { formatNum } from "@/lib/format-number";
@@ -114,7 +115,7 @@ export default function Dashboard() {
     },
     {
       id: `rain-${latestData?.intensitasAir}`,
-      title: "Rain Status",
+      title: "Rain Intensity",
       value: formatNum(latestData?.intensitasAir, 0) ? `${formatNum(latestData?.intensitasAir, 0)}` : "—",
       icon: <CloudRain className="h-4 w-4 text-cyan-500" />,
       color: "bg-cyan-500/10",
@@ -250,108 +251,7 @@ export default function Dashboard() {
             value="config"
             className="space-y-6 animate-in fade-in-50"
           >
-            <Card className="rounded-2xl shadow-sm">
-              <CardHeader>
-                <CardTitle>Sensor Thresholds</CardTitle>
-                <CardDescription>
-                  Configure the trigger points for automatic retraction and
-                  extension.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8">
-                  <div className="space-y-6 bg-amber-50 dark:bg-amber-900/10 p-6 rounded-xl border border-amber-100 dark:border-amber-900/30">
-                    <div className="flex items-center gap-2 mb-4">
-                      <ThermometerSun className="w-5 h-5 text-amber-500" />
-                      <h3 className="text-lg font-medium">
-                        Temperature & Humidity
-                      </h3>
-                    </div>
-                    <div className="space-y-3">
-                      <Label>Min Temperature (°C)</Label>
-                      <Input type="number" defaultValue="25" />
-                      <p className="text-xs text-muted-foreground">
-                        Clothesline extends if above this temperature.
-                      </p>
-                    </div>
-                    <div className="space-y-3">
-                      <Label>Max Humidity (%)</Label>
-                      <Input type="number" defaultValue="70" />
-                      <p className="text-xs text-muted-foreground">
-                        Clothesline retracts if above this humidity.
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="space-y-6 bg-blue-50 dark:bg-blue-900/10 p-6 rounded-xl border border-blue-100 dark:border-blue-900/30">
-                    <div className="flex items-center gap-2 mb-4">
-                      <CloudRain className="w-5 h-5 text-blue-500" />
-                      <h3 className="text-lg font-medium">
-                        Rain & Light (LDR)
-                      </h3>
-                    </div>
-                    <div className="space-y-3">
-                      <Label>Rain Sensitivity (Intensity)</Label>
-                      <Select defaultValue="medium">
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select sensitivity" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="high">
-                            High (Any Drop)
-                          </SelectItem>
-                          <SelectItem value="medium">
-                            Medium (Drizzle)
-                          </SelectItem>
-                          <SelectItem value="low">
-                            Low (Heavy Rain)
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-3">
-                      <Label>Min Light Intensity (Lux)</Label>
-                      <Input type="number" defaultValue="300" />
-                      <p className="text-xs text-muted-foreground">
-                        Clothesline retracts if light goes below this (Night
-                        mode).
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-              <CardFooter className="bg-zinc-50 dark:bg-zinc-900/50 rounded-b-2xl border-t border-zinc-200 dark:border-zinc-800 p-6">
-                <div className="flex items-center justify-between w-full">
-                  <p className="text-sm text-muted-foreground">
-                    Changes to thresholds apply immediately in Auto Mode.
-                  </p>
-                  <Button>Save Configuration</Button>
-                </div>
-              </CardFooter>
-            </Card>
-
-            <Card className="rounded-2xl shadow-sm">
-              <CardHeader>
-                <CardTitle>Data Recording Frequency</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2 max-w-md">
-                  <Label>Log sensor data every:</Label>
-                  <Select defaultValue="60">
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select frequency" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="5">5 Minutes</SelectItem>
-                      <SelectItem value="15">15 Minutes</SelectItem>
-                      <SelectItem value="30">30 Minutes</SelectItem>
-                      <SelectItem value="60">1 Hour</SelectItem>
-                      <SelectItem value="120">2 Hours</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </CardContent>
-            </Card>
+            <ConfigurationThreshold />
           </TabsContent>
         </Tabs>
       </div>

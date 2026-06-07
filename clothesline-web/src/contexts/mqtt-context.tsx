@@ -13,7 +13,7 @@ interface MqttContextType {
   lastActionData: IoTData | null;
   sendCommand: (payload: CommandPayload) => void;
   pingDevice: (deviceId: string) => Promise<boolean>;
-  globalOnlineMap: Record<string, boolean>; 
+  globalOnlineMap: Record<string, boolean>;
 }
 
 const MqttContext = createContext<MqttContextType | null>(null);
