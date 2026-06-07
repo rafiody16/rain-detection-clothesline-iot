@@ -14,7 +14,6 @@ interface MqttContextType {
   sendCommand: (payload: CommandPayload) => void;
   pingDevice: (deviceId: string) => Promise<boolean>;
   globalOnlineMap: Record<string, boolean>;
-  client: MqttClient | null;
 }
 
 const MqttContext = createContext<MqttContextType | null>(null);

@@ -11,10 +11,10 @@ export function useMqttStatus(deviceId: string | null) {
   const [latestData, setLatestData] = useState<IoTData | null>(null);
   const [rawHistory, setRawHistory] = useState<IoTData[]>([]);
   const [lastActionData, setLastActionData] = useState<IoTData | null>(null);
-  const [client, setClient] = useState<MqttClient | null>(null);
 
   const mqttClientRef = useRef<any>(null);
   const { historyData, isLoading } = useFirebase();
+  const topicConfig = `jemuran/${deviceId}/config`;
 
   useEffect(() => {
     if (!isLoading && historyData.length > 0 && lastActionData === null) {
@@ -94,14 +94,12 @@ export function useMqttStatus(deviceId: string | null) {
     });
 
     mqttClientRef.current = client;
-    setClient(client);
 
     return () => {
       clearTimeout(timeoutId);
       clearInterval(heartbeatCheck);
       client?.end(true);
       mqttClientRef.current = null;
-      setClient(null);
     };
   }, [deviceId]);
 
@@ -110,9 +108,10 @@ export function useMqttStatus(deviceId: string | null) {
       console.error("MQTT not connected or no device selected");
       return;
     }
-    const topic = `jemuran/${deviceId}/kontrol`;
-    mqttClientRef.current.publish(topic, payload);
-    console.log(`Command sent to ${topic}: ${payload}`);
+    // Convert payload to string if it's an object
+    const messageToSend = typeof payload === 'string' ? payload : JSON.stringify(payload);
+    mqttClientRef.current.publish(topicConfig, messageToSend);
+    console.log(`Command sent to ${topicConfig}: ${messageToSend}`);
   };
 
   const pingDevice = (targetDeviceId: string): Promise<boolean> => {
@@ -161,5 +160,5 @@ export function useMqttStatus(deviceId: string | null) {
     });
   };
 
-  return { isOnline, latestData, rawHistory, lastActionData, sendCommand, pingDevice, client };
+  return { isOnline, latestData, rawHistory, lastActionData, sendCommand, pingDevice };
 }

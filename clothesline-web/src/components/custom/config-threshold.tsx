@@ -9,7 +9,7 @@ import { toast } from "sonner"; // atau komponen notifikasi bawaan Anda
 import { Sun, CloudRain, Thermometer } from "lucide-react";
 
 export function ConfigurationThreshold() {
-  const { client } = useMqtt();
+  const { sendCommand } = useMqtt();
   const { activeDevice } = useDevice();
   const deviceId = activeDevice?.deviceId || null;
 
@@ -30,11 +30,6 @@ export function ConfigurationThreshold() {
       return;
     }
 
-    if (!client) {
-      toast.error("MQTT Client belum terhubung ke broker");
-      return;
-    }
-
     // Validasi Logika Rentang agar tidak tumpang tindih (Sangat Penting!)
     if (Number(ldrTerik) >= Number(ldrBerawan) || Number(ldrBerawan) >= Number(ldrMendung)) {
       toast.error("Urutan threshold LDR salah! Harus: Terik < Berawan < Mendung");
@@ -45,7 +40,6 @@ export function ConfigurationThreshold() {
       return;
     }
 
-    const topicConfig = `jemuran/${deviceId}/config`;
     const payload = {
       batasSuhu: Number(suhu),
       batasLembab: Number(kelembaban),
@@ -56,7 +50,7 @@ export function ConfigurationThreshold() {
       hujanGerimis: Number(hujanGerimis),
     };
 
-    client.publish(topicConfig, JSON.stringify(payload), { qos: 1 });
+    sendCommand(payload);
     toast.success("Konfigurasi multi-threshold cuaca berhasil diterapkan!");
   };
 
