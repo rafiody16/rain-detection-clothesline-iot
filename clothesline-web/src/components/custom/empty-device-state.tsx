@@ -12,8 +12,8 @@ export function EmptyDeviceState() {
       <div className="max-w-md w-full text-center space-y-8">
         {/* Icon */}
         <div className="relative mx-auto w-28 h-28">
-          <div className="absolute inset-0 rounded-full bg-gradient-to-br from-blue-500/20 to-purple-500/20 animate-pulse" />
-          <div className="relative w-28 h-28 rounded-full bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-900/30 dark:to-purple-900/30 border-2 border-dashed border-blue-300 dark:border-blue-700 flex items-center justify-center">
+          <div className="absolute inset-0 rounded-full bg-linear-to-br from-blue-500/20 to-purple-500/20 animate-pulse" />
+          <div className="relative w-28 h-28 rounded-full bg-linear-to-br from-blue-50 to-purple-50 dark:from-blue-900/30 dark:to-purple-900/30 border-2 border-dashed border-blue-300 dark:border-blue-700 flex items-center justify-center">
             <Cpu className="w-12 h-12 text-blue-500/70" />
           </div>
         </div>

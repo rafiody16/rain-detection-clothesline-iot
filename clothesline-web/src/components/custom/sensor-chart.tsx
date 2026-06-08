@@ -49,7 +49,7 @@ export function SensorChart({ data, config, title, desc, isOnline }: SensorChart
                 </div>
             </CardHeader>
             <CardContent className="pl-0 pr-0 pb-0">
-                <div className="h-[280px] w-full">
+                <div className="h-[280] w-full">
                     <ResponsiveContainer width="100%" height="100%">
                         <AreaChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                             <defs>
