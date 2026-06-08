@@ -52,7 +52,7 @@ int HUJAN_GERIMIS = 2500;  // 2500 - 3800: Ada tetesan (Gerimis)
 const int PUTAR_MASUK = 0;
 const int PUTAR_KELUAR = 180;
 const int BERHENTI = 90;
-const int DURASI_PUTAR = 3000;
+const int DURASI_PUTAR = 5000;
 
 bool statusDiLuar = false;
 bool modeAuto = true;
@@ -153,8 +153,8 @@ void callback(char *topic, byte *payload, unsigned int length)
 
     if (!error) {
       // Konfigurasi DHT
-      if (doc.containsKey("batasSuhu")) batasSuhu = doc["batasSuhu"];
-      if (doc.containsKey("batasLembab")) batasLembab = doc["batasLembab"];
+      if (doc.containsKey("batasSuhu")) BATAS_SUHU = doc["batasSuhu"];
+      if (doc.containsKey("batasLembab")) BATAS_LEMBAB = doc["batasLembab"];
 
       // Konfigurasi Multi-level LDR
       if (doc.containsKey("ldrTerik")) LDR_TERIK = doc["ldrTerik"];
