@@ -114,8 +114,18 @@ void gerakJemuran(String aksi, String asal) {
     Serial.println(asal + ": Menarik jemuran MASUK...");
     setLeds(false, true, false);
     servoJemuran.write(PUTAR_MASUK);
-    delay(DURASI_PUTAR);
+
+    unsigned long start = millis();
+    Serial.println("Mulai MASUK at: " + String(start));
+    while (millis() - start < (unsigned long)DURASI_PUTAR) {
+      client.loop();
+      delay(10);
+    }
+
     servoJemuran.write(BERHENTI);
+    unsigned long end = millis();
+    Serial.println("Selesai MASUK at: " + String(end) + ", durasi(ms): " + String(end - start));
+
     statusDiLuar = false;
     setLeds(true, false, false);
     client.publish(topicStatus.c_str(), ("EVENT: MASUK (" + asal + ")").c_str());
@@ -124,8 +134,18 @@ void gerakJemuran(String aksi, String asal) {
     Serial.println(asal + ": Mendorong jemuran KELUAR...");
     setLeds(false, true, false);
     servoJemuran.write(PUTAR_KELUAR);
-    delay(DURASI_PUTAR);
+
+    unsigned long start = millis();
+    Serial.println("Mulai KELUAR at: " + String(start));
+    while (millis() - start < (unsigned long)DURASI_PUTAR) {
+      client.loop();
+      delay(10);
+    }
+
     servoJemuran.write(BERHENTI);
+    unsigned long end = millis();
+    Serial.println("Selesai KELUAR at: " + String(end) + ", durasi(ms): " + String(end - start));
+
     statusDiLuar = true;
     setLeds(false, false, true);
     client.publish(topicStatus.c_str(), ("EVENT: KELUAR (" + asal + ")").c_str());
