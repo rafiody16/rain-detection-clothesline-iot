@@ -7,12 +7,15 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner"; // atau komponen notifikasi bawaan Anda
 import { Sun, CloudRain, Thermometer } from "lucide-react";
+import { useMqttStatus } from "@/hooks/use-mqtt-status";
 
 export function ConfigurationThreshold() {
-  const { sendCommand } = useMqtt();
+  const { sendConfig } = useMqtt();
   const { activeDevice } = useDevice();
   const deviceId = activeDevice?.deviceId || null;
 
+  const { isOnline } = useMqttStatus(deviceId);
+  
   // State untuk seluruh tingkatan threshold cuaca
   const [suhu, setSuhu] = useState(25);
   const [kelembaban, setKelembaban] = useState(80);
@@ -50,8 +53,12 @@ export function ConfigurationThreshold() {
       hujanGerimis: Number(hujanGerimis),
     };
 
-    sendCommand(payload);
-    toast.success("Konfigurasi multi-threshold cuaca berhasil diterapkan!");
+    sendConfig(payload);
+    if (isOnline) {
+      toast.success("Konfigurasi multi-threshold cuaca berhasil diterapkan!");
+    } else {      
+      toast.error("Perangkat offline"); 
+    }
   };
 
   return (

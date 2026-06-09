@@ -235,3 +235,5 @@ export function ServoControl() {
     </div>
   )
 }
+
+export default ServoControl;

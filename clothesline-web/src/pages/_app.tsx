@@ -13,6 +13,8 @@ import {
   Inter, JetBrains_Mono, Poppins, Fira_Code, 
   Montserrat, DM_Sans, Space_Mono 
 } from "next/font/google";
+import { Toast } from "radix-ui";
+import { Toaster } from "@/components/ui/sonner";
 
 const fontInter = Inter({ subsets: ["latin"], display: 'swap' });
 const fontJetBrainsMono = JetBrains_Mono({ subsets: ["latin"], display: 'swap' });
@@ -74,7 +76,7 @@ export default function App({
               /* JIKA BUKAN DASHBOARD: Langsung render halaman tanpa memuat IoT */
               pageContent
             )}
-
+            <Toaster position="top-right" />
           </TooltipProvider>
         </ThemeProvider>
       </ColorThemeProvider>
