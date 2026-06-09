@@ -9,7 +9,7 @@ import { toast } from "sonner"; // atau komponen notifikasi bawaan Anda
 import { Sun, CloudRain, Thermometer } from "lucide-react";
 
 export function ConfigurationThreshold() {
-  const { sendCommand } = useMqtt();
+  const { sendConfig } = useMqtt();
   const { activeDevice } = useDevice();
   const deviceId = activeDevice?.deviceId || null;
 
@@ -50,7 +50,7 @@ export function ConfigurationThreshold() {
       hujanGerimis: Number(hujanGerimis),
     };
 
-    sendCommand(payload);
+    sendConfig(payload);
     toast.success("Konfigurasi multi-threshold cuaca berhasil diterapkan!");
   };
 
