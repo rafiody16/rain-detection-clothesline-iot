@@ -12,6 +12,7 @@ interface MqttContextType {
   rawHistory: IoTData[];
   lastActionData: IoTData | null;
   sendCommand: (payload: CommandPayload) => void;
+  sendConfig: (config: any) => void;
   pingDevice: (deviceId: string) => Promise<boolean>;
   globalOnlineMap: Record<string, boolean>;
 }

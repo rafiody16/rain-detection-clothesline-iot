@@ -78,11 +78,16 @@ export function AddDeviceWizard() {
           client.subscribe(pairTopic);
           client.publish(pairTopic, "PING");
         });
-
+        
         client.on("message", (_topic: string, payload: Buffer) => {
           try {
             const data = JSON.parse(payload.toString());
-            if (data.pong === true && data.deviceId === targetId) {
+            
+            // PERBAIKAN: Gunakan .toUpperCase() pada keduanya agar perbandingan aman
+            const receivedId = (data.deviceId || "").toUpperCase();
+            const targetIdUpper = targetId.toUpperCase();
+
+            if (data.pong === true && receivedId === targetIdUpper) {
               if (!resolved) {
                 resolved = true;
                 clearTimeout(timeout);
