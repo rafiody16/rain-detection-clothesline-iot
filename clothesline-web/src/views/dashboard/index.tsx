@@ -1,30 +1,13 @@
 "use client";
 
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-  CardFooter,
-} from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
 import {
   CloudRain,
-  Cloud,
-  CloudFog,
-  Moon,
-  CloudDrizzle,
   Sun,
   ThermometerSun,
   Wind,
@@ -35,61 +18,28 @@ import { SensorChart } from "@/components/custom/sensor-chart";
 import { useMqtt } from "@/contexts/mqtt-context";
 import { formatNum } from "@/lib/format-number";
 import { StatCard } from "@/components/custom/stat-card";
-import { StatusCard } from "@/components/custom/servo-status-card";
-
-// Fungsi untuk mendapatkan konfigurasi ikon, warna, dan label cuaca
-const getWeatherConfig = (kondisi: string) => {
-  switch (kondisi) {
-    case "Cerah Terik":
-      return { 
-        icon: Sun, 
-        color: "text-yellow-500 bg-yellow-100 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-900/50", 
-        label: "Cerah Terik" 
-      };
-    case "Berawan":
-      return { 
-        icon: Cloud, 
-        color: "text-slate-400 bg-slate-100 dark:bg-slate-800/20 border-slate-200 dark:border-slate-800/50", 
-        label: "Berawan Sebagian" 
-      };
-    case "Mendung":
-      return { 
-        icon: CloudFog, 
-        color: "text-amber-600 bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-900/50", 
-        label: "Mendung (Antisipasi)" 
-      };
-    case "Malam/Gelap":
-      return { 
-        icon: Moon, 
-        color: "text-indigo-400 bg-indigo-50 dark:bg-indigo-950/20 border-indigo-200 dark:border-indigo-900/50", 
-        label: "Malam / Gelap" 
-      };
-    case "Gerimis":
-      return { 
-        icon: CloudDrizzle, 
-        color: "text-sky-500 bg-sky-50 dark:bg-sky-950/20 border-sky-200 dark:border-sky-900/50", 
-        label: "Gerimis" 
-      };
-    case "Hujan Deras":
-      return { 
-        icon: CloudRain, 
-        color: "text-blue-600 bg-blue-100 dark:bg-blue-900/30 border-blue-200 dark:border-blue-900/60 animate-pulse", 
-        label: "Hujan Deras" 
-      };
-    default:
-      return { 
-        icon: Sun, 
-        color: "text-muted-foreground bg-muted border-transparent", 
-        label: "Mendeteksi..." 
-      };
-  }
-};
+import { StatusCard } from "@/components/custom/servo-status-card"; // Pastikan nama file/path sudah sesuai
 
 export default function Dashboard() {
   const { latestData, rawHistory: chartData, isOnline, lastActionData } = useMqtt();
-  const kondisiCuaca = latestData?.kondisi || "Mendeteksi...";
-  const weather = getWeatherConfig(kondisiCuaca);
-  const WeatherIcon = weather.icon;
+  
+  // LOGIKA GABUNGAN: LDR + WAKTU (FRONTEND)
+  const getRealKondisi = () => {
+    const kondisiRaw = latestData?.kondisi || "Mendeteksi...";
+    
+    // Ambil jam saat ini dari sistem/browser user (format 0-23)
+    const currentHour = new Date().getHours();
+    
+    // Jika sensor mendeteksi gelap, tapi masih antara jam 06:00 pagi - 17:59 sore
+    if (kondisiRaw === "Malam/Gelap" && currentHour >= 6 && currentHour < 18) {
+      return "Mendung"; // Berarti gelap karena mendung pekat (antisipasi hujan)
+    }
+    
+    return kondisiRaw;
+  };
+
+  // Terapkan kondisi yang sudah diproses
+  const kondisiCuaca = getRealKondisi();
 
   const stats = [
     {
@@ -131,23 +81,19 @@ export default function Dashboard() {
     const date = new Date(timestampValue);
     const now = new Date();
 
-    // Cek apakah hari, bulan, dan tahunnya sama dengan hari ini
     const isToday =
       date.getDate() === now.getDate() &&
       date.getMonth() === now.getMonth() &&
       date.getFullYear() === now.getFullYear();
 
-    // Ambil jam & menit (Contoh: "15:53")
     const timeString = date.toLocaleTimeString("id-ID", {
       hour: "2-digit",
       minute: "2-digit",
-    }).replace(/\./g, ':'); // Mengubah format titik 15.53 jadi titik dua 15:53 agar lebih standar
+    }).replace(/\./g, ':');
 
     if (isToday) {
-      // Jika hari ini, tampilkan "Hari ini, 15:53" atau cukup jamnya saja
       return `Hari ini, ${timeString}`;
     } else {
-      // Jika bukan hari ini, tampilkan tanggal ringkas "13 Mei, 15:53"
       const dateString = date.toLocaleDateString("id-ID", {
         day: "numeric",
         month: "short",
@@ -155,6 +101,7 @@ export default function Dashboard() {
       return `${dateString}, ${timeString}`;
     }
   };
+
   return (
     <>
       <div className="flex flex-1 flex-col gap-4 p-3 md:p-8 pt-4">
@@ -166,7 +113,7 @@ export default function Dashboard() {
           </TabsList>
 
           <TabsContent value="overview" className="space-y-6 animate-in fade-in-50">
-            {/* 1. SENSOR STATS - Tetap 4 kolom di layar besar */}
+            {/* 1. SENSOR STATS */}
             <div className="grid grid-cols-2 gap-3 md:gap-4 md:grid-cols-2 lg:grid-cols-4">
               {stats?.map((stat, i) => (
                 <StatCard
@@ -180,29 +127,10 @@ export default function Dashboard() {
               ))}
             </div>
 
-            <Card className={`border ${weather.color} transition-all duration-300`}>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between space-y-0 pb-2">
-                  <span className="text-sm font-medium uppercase tracking-wider opacity-80">
-                    Kondisi Lingkungan
-                  </span>
-                  <WeatherIcon className="h-6 w-6" />
-                </div>
-                <div className="mt-2">
-                  <h2 className="text-2xl font-bold tracking-tight">
-                    {weather.label}
-                  </h2>
-                  <p className="text-xs opacity-70 mt-1">
-                    {kondisiCuaca === "Mendung" ? "Jemuran otomatis ditarik masuk" : "Sistem berjalan normal"}
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
+            {/* 2. MAIN CHARTS & SERVO STATUS */}
+            <div className="grid gap-6 lg:grid-cols-3 items-stretch">
 
-            {/* 2. MAIN CHARTS & SERVO STATUS - Layout Grid Campuran */}
-            <div className="grid gap-6 lg:grid-cols-3 lg:items-start">
-
-              {/* Kolom Kiri & Tengah: Charts (Temperature & Humidity) */}
+              {/* Kolom Kiri & Tengah: Charts (Temperature, Humidity, Light Level) */}
               <div className="order-2 lg:order-1 lg:col-span-2 space-y-6">
                 <div className="grid gap-6 md:grid-cols-2">
                   <SensorChart
@@ -219,7 +147,6 @@ export default function Dashboard() {
                   />
                 </div>
 
-                {/* Light Level mengambil lebar penuh di kolom chart */}
                 <SensorChart
                   data={chartData}
                   title="Light Level"
@@ -229,10 +156,11 @@ export default function Dashboard() {
                 />
               </div>
 
-              {/* Kolom Kanan: Servo Status & Control Summary */}
-              <div className="order-1 lg:order-2 lg:col-span-1">
+              {/* Kolom Kanan: Servo Status & Kondisi Lingkungan */}
+              <div className="order-1 lg:order-2 lg:col-span-1 flex h-full">
                 <StatusCard
                   lastActionData={lastActionData}
+                  kondisiCuaca={kondisiCuaca}
                   formatSmartTime={formatSmartTime}
                 />
               </div>
