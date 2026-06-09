@@ -1,6 +1,6 @@
 import { Sun, CloudRainWindIcon } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { IoTData } from "@/utils/iot-data"; // Pastikan path import ini sesuai dengan file iot-data.ts milikmu
+import { IoTData } from "@/utils/iot-data";
 
 export interface StatusCardProps {
   lastActionData: IoTData | null;
